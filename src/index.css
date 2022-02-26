@@ -1,0 +1,53 @@
+.m-wrap {
+  position: relative;
+  display: flex;
+  width: 100%;
+}
+
+.staff-wrap {
+  display: flex;
+  width: 100%;
+  background: white;
+  padding: 1em 0;
+}
+
+staff {
+  display: flex;
+  width: 100%;
+  flex-flow: column;
+}
+
+staff line {
+  width: 100%;
+  border-top: 0.02em solid black;
+  padding: calc((1em - 0.02em * 3)/8); 
+}
+
+.notation {
+  width: 100%;
+  height: 1em;
+  position: absolute;
+  top: 1em;
+}
+
+.notation span {
+  position: absolute;
+}
+
+.notation span:not(.regular) {
+  font-family: 'Noto Music';
+  font-size: 1.01em;
+  line-height: 1.01em;
+}
+
+
+.notation .regular {
+  font-family: 'Times New Roman';
+  vertical-align:bottom;
+  font-weight: bold;
+  font-size: 0.25em;
+}
+
+.notation .gclef {
+
+}
