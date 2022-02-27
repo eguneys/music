@@ -22,7 +22,7 @@ body {
     }
 
     section {
-      font-size: 2em;
+      font-size: 3em;
       display: flex;
     }
 
@@ -47,6 +47,15 @@ body {
       <section class='zoom'>
         <div id='app3'></div>
       </section>
+      <section class=''>
+        <div id='app4'></div>
+      </section>
+      <section class=''>
+        <div id='app5'></div>
+      </section>
+      <section class=''>
+        <div id='app6'></div>
+      </section>
     </div>
 
     <script>
@@ -64,6 +73,19 @@ brace
 gclef 'G'G3/G4w 'F'G3/F4w 'E'G3/E4w 'D'G3/D4w 'C'G3/C4w
 bclef 'F'C2/F3w 'G'C2/G3w 'A'C2/A3w 'B'C2/B3w 'C'C2/C4w
      `}, document.getElementById('app3'))
+
+              Space({ fen: `
+brace
+gclef 2/4 'G'G3/G4w 'F'G3/F4w 'E'G3/E4w 'D'G3/D4w 'C'G3/C4w
+bclef 6/8 'F'C2/F3w 'G'C2/G3w 'A'C2/A3w 'B'C2/B3w 'C'C2/C4w
+     `}, document.getElementById('app4'))
+
+
+              Space({ fen: `
+gclef 3/4 'Beats'B5/'1'A3/B4h '2'A3/B4h '3'A3/B4h
+     `}, document.getElementById('app5'))
+
+
 
             })
     </script>

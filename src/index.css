@@ -35,7 +35,7 @@ lines line {
   position: absolute;
 }
 
-.notation span:not(.regular) {
+.notation span.note {
   font-family: 'Noto Music';
   font-size: 1.01em;
   line-height: 1.01em;
@@ -87,8 +87,8 @@ lines line {
 }
 
 
-.gclef .pitch-c.octave-four::before,
-.bclef .pitch-c.octave-four::before {
+.gclef .note.pitch-c.octave-four::before,
+.bclef .note.pitch-c.octave-four::before {
   content: '';
   position: absolute;
   width: 0.6em;
@@ -96,4 +96,10 @@ lines line {
   top: calc(50% + 0.35em);
   left: 50%;
   transform: translate(-50%, -50%);
+}
+
+
+.notation .time {
+  font-size: 0.5em;
+  font-weight: bold;
 }

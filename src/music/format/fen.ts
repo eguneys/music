@@ -1,5 +1,6 @@
-import { uci_note, uci_clef } from '../types'
-import { Staff, Notations } from '../types'
+import { uci_note, uci_clef, uci_nb_note_value, uci_note_value } from '../types'
+import { make_time_signature } from '../types'
+import { Staff, Notations, TimeSignature } from '../types'
 
 export type Fen = string
 
@@ -11,6 +12,9 @@ export type Music = Staff | [Staff, Staff]
 // brace\n
 // gclef 'G'g4 'A'a4/'F'f4 'B'b4/'E'e4 'C'c5/'D'd4 'D'd5 'E'e5 'F'f5 'G'g5\n
 // bclef 'G'g4 'A'a4/'F'f4 'B'b4/'E'e4 'C'c5/'D'd4 'D'd5 'E'e5 'F'f5 'G'g5
+// 
+// gclef 2/4 'G'g4 'A'a4/'F'f4 'B'b4/'E'e4 'C'c5/'D'd4 'D'd5 'E'e5 'F'f5 'G'g5
+//
 
 export function fen_music(fen: Fen): Music | undefined {
   let staff = fen.split('\n')
@@ -31,6 +35,10 @@ export function fen_staff(fen: string): Staff | undefined {
 
   let clef = uci_clef(_clef)
 
+  let time = read_time(_notes[0])
+
+  if (time) { _notes.splice(0, 1) }
+
   let notes: Array<Notations> = _notes.flatMap(_ => {
     let res = read_notation(_)
     return !res ? [] : [res]
@@ -39,8 +47,20 @@ export function fen_staff(fen: string): Staff | undefined {
   if (clef) {
     return {
       clef,
+      time,
       notes
     }
+  }
+}
+
+export function read_time(time: string): TimeSignature | undefined {
+  let [_nb_note_value, _note_value] = time.split('/')
+
+  let nb_note_value = uci_nb_note_value(parseInt(_nb_note_value)),
+    note_value = uci_note_value(parseInt(_note_value))
+
+  if (nb_note_value && note_value) {
+    return make_time_signature(nb_note_value, note_value)
   }
 }
 

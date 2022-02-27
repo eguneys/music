@@ -2,8 +2,9 @@ import { h, VNode } from 'snabbdom'
 import Ctrl from './ctrl'
 import g from './glyphs'
 
-import { Clef, Music, Staff, Note, NotationOrNote, Notations } from './music'
+import { Clef, Music, Staff, Note, NotationOrNote, Notations, TimeSignature } from './music'
 import { note_line, note_pitch, note_octave, note_duration, note_accidental } from './music'
+import { time_nb_note_value, time_note_value } from './music'
 
 export default function view(ctrl: Ctrl) {
 
@@ -25,15 +26,29 @@ export default function view(ctrl: Ctrl) {
 }
 
 function staff(ctrl: Ctrl, staff: Staff) {
-  let { clef:  _clef, notes } = staff
+  let { clef:  _clef, time: _time, notes } = staff
   let klef = (_clef === 1) ? 'gclef':'bclef'
+
   return h('div.staff-wrap.' + klef, [
     h('lines', [h('line'), h('line'), h('line'), h('line'), h('line')]),
     h('div.notation', [
       clef(ctrl, _clef),
+      ...(_time ? time(ctrl, _time):[]),
       ...notes.flatMap((_, i) => notations(ctrl, _clef, _, i, notes.length))
     ])
   ])
+}
+
+let time_glyphs = {
+  2: 'two',
+  3: 'three',
+  4: 'four',
+  8: 'four',
+  16: 'four',
+  6: 'six',
+  9: 'nine',
+  10: 'ten',
+  12: 'twelve'
 }
 
 function notations(ctrl: Ctrl, clef: Clef, notations: Notations, i: number, l: number) {
@@ -62,13 +77,27 @@ function note_klass(note: Note) {
   ].join('.')
 }
 
+let note_glyphs = [
+  g.whole_note, 
+  g.whole_note, 
+  g.half_note, 
+  g.whole_note, 
+  g.whole_note, 
+  g.whole_note, 
+  g.whole_note, 
+  g.whole_note, 
+  g.whole_note, 
+]
 function notation(ctrl: Ctrl, clef: Clef, notation: NotationOrNote, i: number, l: number) {
 
-  let x_measure = 4.15
+  let x_measure = 6.15
+
 
   if (typeof notation === 'number') {
     let note = notation
-    return h('span.' + note_klass(note), style_transform(x_measure + (i/l) * 20, note_line(clef, notation)), g.whole_note)
+    let duration = note_duration(note)
+    console.log(duration, note_glyphs[duration - 1])
+    return h('span.note.' + note_klass(note), style_transform(x_measure + (i/l) * 20, note_line(clef, notation)), note_glyphs[duration - 1])
   }
 
   let { text, note } = notation
@@ -86,7 +115,18 @@ function clef(ctrl: Ctrl, _clef: Clef) {
   } else {
     style = style_transform(0.15, 4)
   }
-  return h('span.clef', style, g[clef])
+  return h('span.note.clef', style, g[clef])
+}
+
+function time(ctrl: Ctrl, time: TimeSignature) {
+  let nb_note_value = time_nb_note_value(time),
+    note_value = time_note_value(time)
+
+  return [
+    h('span.time.nb_note_value', regular_transform(2, 10), g[time_glyphs[nb_note_value] + '_time']),
+    h('span.time.note_value', regular_transform(2, 8), g[time_glyphs[note_value] + '_time'])
+  ]
+
 }
 
 export function regular_transform(x: number, y: number) {

@@ -13,6 +13,12 @@ export type Clef = 1 | 2
 
 export type BarLine = 1 | 2
 
+
+export type NbNoteValuePerMeasure = 2 | 3 | 4 | 6 | 9 | 12
+export type NoteValue = 2 | 4 | 8 | 16
+
+export type TimeSignature = number
+
 export type Text = string
 
 export type Notation = {
@@ -26,6 +32,7 @@ export type Notations = NotationOrNote | Array<NotationOrNote>
 
 export type Staff = {
   clef: Clef,
+  time?: TimeSignature,
   notes: Array<Notations>
 }
 
@@ -147,4 +154,33 @@ function uci_accidental(accidental: string) {
 export function uci_clef(clef: string) {
   let i = clefs.indexOf(clef)
   if (i !== -1) return i + 1 as Clef
+}
+
+
+export function make_time_signature(nb_note_value: NbNoteValuePerMeasure, note_value: NoteValue) {
+
+  return nb_note_value * 32 + note_value
+}
+
+export function time_nb_note_value(signature: TimeSignature): NbNoteValuePerMeasure {
+  return Math.floor(signature / 32) as NbNoteValuePerMeasure
+}
+
+export function time_note_value(signature: TimeSignature): NoteValue {
+  return signature % 32 as NoteValue
+}
+
+const nb_note_values = [2 , 3 , 4 , 6 , 9, 12]
+const note_values = [2 , 4 , 8 , 16]
+
+export function uci_nb_note_value(nb_note_value: number): NbNoteValuePerMeasure | undefined {
+  if (nb_note_values.includes(nb_note_value)) {
+    return nb_note_value as NbNoteValuePerMeasure
+  }
+}
+
+export function uci_note_value(note_value: number): NoteValue | undefined {
+  if (note_values.includes(note_value)) {
+    return note_value as NoteValue
+  }
 }
