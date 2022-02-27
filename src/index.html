@@ -21,7 +21,7 @@ body {
       flex-flow:column;
     }
 
-    .example{
+    section {
       font-size: 2em;
       display: flex;
     }
@@ -38,19 +38,32 @@ body {
   </head>
   <body>
     <div class='sheet'>
-      <div class='example zoom'>
-        <div id='zoomapp'></div>
-      </div>
-      <div class='example'>
-        <div id='app'></div>
-      </div>
+      <section class='zoom'>
+        <div id='app1'></div>
+      </section>
+      <section>
+        <div id='app2'></div>
+      </section>
+      <section class='zoom'>
+        <div id='app3'></div>
+      </section>
     </div>
 
     <script>
       document.addEventListener('DOMContentLoaded', () => {
-        Space(document.getElementById('zoomapp'))
-        Space(document.getElementById('app'))
-      })
+              Space({ fen: `
+gclef 'G'G4 'A'A4/'F'F4 'B'B4/'E'E4 'C'C5/'D'D4 'D'D5 'E'E5 'F'F5 'G'G5 dbarline
+     ` }, document.getElementById('app1'))
+              
+              Space({ fen: `
+bclef 'F'F3 'G'G3/'E'E3 'A'A3/'D'D3 'B'B3/'C'C3 'B'B2 'A'A2 'G'G2 'F'F2 dbarline
+     `}, document.getElementById('app2'))
+
+              Space({ fen: `
+bclef 'F'F3 'G'G3/'E'E3 'A'A3/'D'D3 'B'B3/'C'C3 'B'B2 'A'A2 'G'G2 'F'F2 dbarline
+     `}, document.getElementById('app3'))
+
+            })
     </script>
   </body>
 </html>

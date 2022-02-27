@@ -6,9 +6,12 @@ const patch = init([classModule, styleModule, attributesModule])
 import Ctrl from './ctrl'
 import view from './view'
 
-export default function app(element: HTMLElement) {
+import { Config, configure } from './config'
 
-  let ctrl = new Ctrl(redraw)
+export default function app(_config: Partial<Config>, element: HTMLElement) {
+
+  let config = configure(_config)
+  let ctrl = new Ctrl(config, redraw)
 
   const blueprint = view(ctrl)
 

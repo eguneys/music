@@ -51,3 +51,7 @@ staff line {
 .notation .gclef {
 
 }
+
+.notation .bclef {
+  margin-top: -0.1em;
+}
