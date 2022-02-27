@@ -50,11 +50,11 @@ lines line {
   margin-left: 0.6em;
 }
 
-.notation .gclef {
+.gclef .notation .clef {
 
 }
 
-.notation .bclef {
+.bclef .notation .clef {
   margin-top: -0.11em;
 }
 
@@ -84,4 +84,16 @@ lines line {
 
 .brace .notation {
   border-left: 2px solid black;
+}
+
+
+.gclef .pitch-c.octave-four::before,
+.bclef .pitch-c.octave-four::before {
+  content: '';
+  position: absolute;
+  width: 0.6em;
+  border-top: 0.02em solid black;
+  top: calc(50% + 0.35em);
+  left: 50%;
+  transform: translate(-50%, -50%);
 }

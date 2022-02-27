@@ -20,7 +20,9 @@ export type Notation = {
   note: Note
 }
 
-export type Notations = Notation | Array<Notation>
+export type NotationOrNote = Notation | Note
+
+export type Notations = NotationOrNote | Array<NotationOrNote>
 
 export type Staff = {
   clef: Clef,

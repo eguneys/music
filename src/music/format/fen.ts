@@ -1,5 +1,5 @@
 import { uci_note, uci_clef } from '../types'
-import { Staff } from '../types'
+import { Staff, Notations } from '../types'
 
 export type Fen = string
 
@@ -31,9 +31,9 @@ export function fen_staff(fen: string): Staff | undefined {
 
   let clef = uci_clef(_clef)
 
-  let notes = _notes.flatMap(_ => {
+  let notes: Array<Notations> = _notes.flatMap(_ => {
     let res = read_notation(_)
-    return res ? [res] : []
+    return !res ? [] : [res]
   })
 
   if (clef) {
@@ -44,13 +44,17 @@ export function fen_staff(fen: string): Staff | undefined {
   }
 }
 
-export function read_notation(notation: string) {
+export function read_notation(notation: string): Notations {
   let n = notation[0]
 
   return notation.split('/').flatMap(n => {
     let res = n.match(/'([a-zA-Z0-9]*)'(.*)$/)
     if (!res) {
-      return uci_note(n)
+      let note = uci_note(n)
+      if (note) {
+        return note
+      }
+      return []
     }
 
     let [_, text, _note] = res
