@@ -1,6 +1,6 @@
 import * as util from './util'
-import { fen_staff, uci_note } from './music'
-import { Staff } from './music'
+import { fen_music, uci_note } from './music'
+import { Music } from './music'
 
 import { Config } from './config'
 
@@ -19,12 +19,12 @@ export default class Ctrl {
   }
 
 
-  staff: Staff
+  music: Music
 
   constructor(config: Config, readonly redraw: Redraw) {
     this._bounds =  util.memo(() => document.body.getBoundingClientRect())
 
-    this.staff = fen_staff(config.fen)!
+    this.music = fen_music(config.fen)!
   }
 
 

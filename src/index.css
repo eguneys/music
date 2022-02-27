@@ -5,19 +5,20 @@
 }
 
 .staff-wrap {
+  position: relative;
   display: flex;
   width: 100%;
   background: white;
   padding: 1em 0;
 }
 
-staff {
+lines {
   display: flex;
   width: 100%;
   flex-flow: column;
 }
 
-staff line {
+lines line {
   width: 100%;
   border-top: 0.02em solid black;
   padding: calc((1em - 0.02em * 3)/8); 
@@ -25,7 +26,7 @@ staff line {
 
 .notation {
   width: 100%;
-  height: 1em;
+  height: 1.02em;
   position: absolute;
   top: 1em;
 }
@@ -46,6 +47,7 @@ staff line {
   vertical-align:bottom;
   font-weight: bold;
   font-size: 0.25em;
+  margin-left: 0.6em;
 }
 
 .notation .gclef {
@@ -53,5 +55,33 @@ staff line {
 }
 
 .notation .bclef {
-  margin-top: -0.1em;
+  margin-top: -0.11em;
+}
+
+.brace-wrap {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  flex: 1;
+  padding-left: 0.5em;
+  background: white;
+}
+
+.brace::before {
+  content: '';
+  position: absolute;
+  top: 2em;
+  height: 2.5em;
+  border-left: 2px solid black;
+  z-index: 1;
+}
+
+.brace {
+  width: 100%;
+  display: flex;
+  flex-flow: column;
+}
+
+.brace .notation {
+  border-left: 2px solid black;
 }

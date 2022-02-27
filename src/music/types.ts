@@ -60,8 +60,6 @@ export function note_accidental(note: Note): Accidental | undefined {
   return (note & accidental_mask) >> 12 as Accidental
 }
 
-
-
 // C4 -> 1 5 -> 1
 // B4 -> 7 5 -> 7
 // C5 -> 1 6 -> 8

@@ -52,15 +52,17 @@ body {
     <script>
       document.addEventListener('DOMContentLoaded', () => {
               Space({ fen: `
-gclef 'G'G4 'A'A4/'F'F4 'B'B4/'E'E4 'C'C5/'D'D4 'D'D5 'E'E5 'F'F5 'G'G5 dbarline
+gclef 'G'G4 'A'A4/'F'F4 'B'B4/'E'E4 'C'C5/'D'D4 'D'D5 'E'E5 'F'F5 'G'G5
      ` }, document.getElementById('app1'))
               
               Space({ fen: `
-bclef 'F'F3 'G'G3/'E'E3 'A'A3/'D'D3 'B'B3/'C'C3 'B'B2 'A'A2 'G'G2 'F'F2 dbarline
+bclef 'F'F3 'G'G3/'E'E3 'A'A3/'D'D3 'B'B3/'C'C3 'B'B2 'A'A2 'G'G2 'F'F2
      `}, document.getElementById('app2'))
 
               Space({ fen: `
-bclef 'F'F3 'G'G3/'E'E3 'A'A3/'D'D3 'B'B3/'C'C3 'B'B2 'A'A2 'G'G2 'F'F2 dbarline
+brace
+gclef 'G'G3/G4w 'F'G3/F4w 'E'G3/E4w 'D'G3/D4w 'C'G3/C4w
+bclef 'F'C2/F3w 'G'C2/G3w 'A'C2/A3w 'B'C2/B3w 'C'C2/C4w
      `}, document.getElementById('app3'))
 
             })

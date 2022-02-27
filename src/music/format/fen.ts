@@ -47,20 +47,18 @@ export function fen_staff(fen: string): Staff | undefined {
 export function read_notation(notation: string) {
   let n = notation[0]
 
-  if (n === '\'') {
-    return notation.split('/').flatMap(n => {
-      let res = n.match(/'([a-zA-Z0-9]*)'(.*)$/)
-      if (!res) {
-        return []
-      }
+  return notation.split('/').flatMap(n => {
+    let res = n.match(/'([a-zA-Z0-9]*)'(.*)$/)
+    if (!res) {
+      return uci_note(n)
+    }
 
-      let [_, text, _note] = res
+    let [_, text, _note] = res
 
-      let note = uci_note(_note)
-      if (note) {
-        return { text, note }
-      }
-      return []
-    })
-  }
+    let note = uci_note(_note)
+    if (note) {
+      return { text, note }
+    }
+    return []
+  })
 }
