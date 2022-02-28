@@ -61,18 +61,9 @@ export default class Input {
         case 'ArrowRight':
           press('right');
           break;
-        case 'x':
-          press('x');
-          break;
-        case 'c':
-          press('c');
-          break;
-        case 'z':
-          press('z')
-          break;
-        case 'e':
-          press('e')
-          break;
+        default:
+          press(e.key)
+          break
       }
     });
 
@@ -90,17 +81,8 @@ export default class Input {
         case 'ArrowRight':
           release('right');
           break;
-        case 'c':
-          release('c');
-          break;
-        case 'x':
-          release('x');
-          break;      
-        case 'z':
-          release('z');
-          break;
-        case 'e':
-          release('e')
+        default:
+          release(e.key)
           break
       }
     });
