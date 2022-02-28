@@ -1,21 +1,20 @@
-const gclef = '𝄞'
-const bclef = '𝄢'
-const half_note = '𝅘'
-const whole_note = '𝅝'
-const dbarline = '𝄁'
-const brace = '𝄔'
+const gclef = ''
+const bclef = ''
+const whole_note = ''
+const half_note = ''
+const quarter_note = ''
+const brace = ''
 
-
-const zero_time = '0'
-const one_time = '1'
-const two_time = '2'
-const three_time = '3'
-const four_time = '4'
-const five_time = '5'
-const six_time = '6'
-const seven_time = '7'
-const eight_time = '8'
-const nine_time = '9'
+const zero_time = ''
+const one_time = ''
+const two_time = ''
+const three_time = ''
+const four_time = ''
+const five_time = ''
+const six_time = ''
+const seven_time = ''
+const eight_time = ''
+const nine_time = ''
 const ten_time = one_time + zero_time
 const twelve_time = one_time + two_time
 
@@ -29,7 +28,6 @@ export default {
   bclef,
   half_note,
   whole_note,
-  dbarline,
   brace,
   zero_time,
   one_time,

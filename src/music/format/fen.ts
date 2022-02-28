@@ -47,7 +47,7 @@ export function fen_staff(fen: string): Staff | undefined {
   if (clef) {
     return {
       clef,
-      time,
+      time: time || 4,
       notes
     }
   }

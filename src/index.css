@@ -1,105 +1,50 @@
 .m-wrap {
-  position: relative;
-  display: flex;
   width: 100%;
+  font-family: Bravura;
+  display: flex;
 }
 
-.staff-wrap {
-  position: relative;
-  display: flex;
+staff {
+  height: 4em;
   width: 100%;
+  position: relative;
   background: white;
-  padding: 1em 0;
+  font-size: 1em;
+  line-height: 4em;
 }
 
-lines {
-  display: flex;
+staff lines {
   width: 100%;
+  position: absolute;
+  top: 2em;
+  transform: translate(0, -50%);
+  display: flex;
   flex-flow: column;
+  align-items: stretch;
 }
 
 lines line {
-  width: 100%;
+  padding-bottom: calc(0.25em - 0.02em);
   border-top: 0.02em solid black;
-  padding: calc((1em - 0.02em * 3)/8); 
 }
 
-.notation {
-  width: 100%;
-  height: 1.02em;
+lines line:last-child {
+  padding-bottom: 0;
+}
+
+staff span {
   position: absolute;
-  top: 1em;
+  transform: translate(1.25em, -0.25em)
 }
 
-.notation span {
-  position: absolute;
+.gclef {
+  transform: translate(0, 0.25em)
 }
 
-.notation span.note {
-  font-family: 'Noto Music';
-  font-size: 1.01em;
-  line-height: 1.01em;
+.two_time {
+  transform: translate(0.75em, -0.25em)
 }
 
-
-.notation .regular {
-  font-family: 'Times New Roman';
-  vertical-align:bottom;
-  font-weight: bold;
-  font-size: 0.25em;
-  margin-left: 0.6em;
-}
-
-.gclef .notation .clef {
-
-}
-
-.bclef .notation .clef {
-  margin-top: -0.11em;
-}
-
-.brace-wrap {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  flex: 1;
-  padding-left: 0.5em;
-  background: white;
-}
-
-.brace::before {
-  content: '';
-  position: absolute;
-  top: 2em;
-  height: 2.5em;
-  border-left: 2px solid black;
-  z-index: 1;
-}
-
-.brace {
-  width: 100%;
-  display: flex;
-  flex-flow: column;
-}
-
-.brace .notation {
-  border-left: 2px solid black;
-}
-
-
-.gclef .note.pitch-c.octave-four::before,
-.bclef .note.pitch-c.octave-four::before {
-  content: '';
-  position: absolute;
-  width: 0.6em;
-  border-top: 0.02em solid black;
-  top: calc(50% + 0.35em);
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-
-.notation .time {
-  font-size: 0.5em;
-  font-weight: bold;
+.four_time {
+  transform: translate(0.75em, 0.25em)
 }

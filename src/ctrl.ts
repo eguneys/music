@@ -4,27 +4,19 @@ import { Music } from './music'
 
 import { Config } from './config'
 
-export type Redraw = () => void
+import { FreeOnStaff } from './types'
 
+export type Redraw = () => void
 
 export default class Ctrl {
 
-  _bounds!: util.Memo<ClientRect>
 
-  get bounds() { return this._bounds() }
-
-  set_element(elm: HTMLElement) {
-    this._bounds = util.memo(() =>
-                             elm.getBoundingClientRect())
-  }
-
-
-  music: Music
+  frees: Array<FreeOnStaff>
 
   constructor(config: Config, readonly redraw: Redraw) {
-    this._bounds =  util.memo(() => document.body.getBoundingClientRect())
 
-    this.music = fen_music(config.fen)!
+    this.frees = config.frees || []
+
   }
 
 

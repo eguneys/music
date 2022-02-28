@@ -32,7 +32,7 @@ export type Notations = NotationOrNote | Array<NotationOrNote>
 
 export type Staff = {
   clef: Clef,
-  time?: TimeSignature,
+  time: TimeSignature,
   notes: Array<Notations>
 }
 

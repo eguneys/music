@@ -1,7 +1,9 @@
 import { Fen } from './music'
+import { FreeOnStaff } from './types'
 
 export type Config = {
-  fen: Fen
+  fen: Fen,
+  frees?: Array<FreeOnStaff>
 }
 
 let defaults = {
