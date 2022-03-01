@@ -21,22 +21,14 @@ export type TimeSignature = number
 
 export type Tempo = 1 | 2 | 3 | 4 | 5 | 6
 
-
-export type Text = string
-
-export type Notation = {
-  text: Text,
-  note: Note
+export type Measure = {
+  notes: Array<Note>
 }
-
-export type NotationOrNote = Notation | Note
-
-export type Notations = NotationOrNote | Array<NotationOrNote>
 
 export type Staff = {
   clef: Clef,
   time: TimeSignature,
-  notes: Array<Notations>
+  measures: Array<Measure>
 }
 
 const tempos = [60, 80, 90, 120, 168, 200]

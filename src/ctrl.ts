@@ -18,12 +18,10 @@ export default class Ctrl {
 
 
   tempo?: Tempo
-
   frees: Array<FreeOnStaff>
+  last_note?: FreeOnStaff
 
   _schedule_redraw = true
-
-  last_note?: FreeOnStaff
 
   constructor(readonly input: Input, 
     readonly config: Config, 
@@ -37,7 +35,6 @@ export default class Ctrl {
       this.add_tempo(3)
     }
   }
-
 
   redraw() {
     this._schedule_redraw = true
@@ -100,7 +97,6 @@ export default class Ctrl {
     }
   }
 
-
   add_tempo(tempo: Tempo) {
     this.tempo = tempo
   }
@@ -129,7 +125,7 @@ export default class Ctrl {
     this.frees.push({
       code: 'gclef',
       klass: '',
-      pitch: 4,
+      pitch: 5,
       octave: 4,
       ox: 0.25,
       oy: 0
