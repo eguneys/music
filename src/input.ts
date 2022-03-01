@@ -1,5 +1,12 @@
 import { ticks } from './shared'
 
+function appr(value: number, target: number, dt: number)  {
+  if (value < target) {
+    return Math.min(value + dt, target)
+  }else {
+    return Math.max(value - dt, target)
+  }
+}
 export default class Input {
 
 
@@ -13,41 +20,56 @@ export default class Input {
 
 
   _btn = new Map()
+  _btn0 = new Map()
+
+  skip_update = false
 
   private press = (key: string) => {
     if (!this._btn.has(key) || this._btn.get(key) === 0) {
+      this._btn0.set(key, this._btn.get(key))
       this._btn.set(key, ticks.one)
+      this.skip_update = true
     }
   }
 
 
   private release = (key: string) => {
-    this._btn.set(key, -ticks.three)
+    if (this._btn.has(key) && this._btn.get(key) > 0) {
+      this._btn0.set(key, this._btn.get(key))
+      this._btn.set(key, -ticks.three)
+      this.skip_update = true
+    }
   }
 
   btn = (key: string) => {
     return this._btn.get(key) || 0
   }
 
-  update = (dt: number, dt0: number) => {
-    for (let [key, t] of this._btn) {
-      let sign = Math.sign(t)
-      if (t !== 0) {
-        t += dt
-        if (Math.sign(t) !== sign) {
-          t = 0
-        }
-      }
-      this._btn.set(key, t)
-    }
+  btn0 = (key: string) => {
+    return this._btn0.get(key) || this.btn(key)
   }
 
+  update = (dt: number, dt0: number) => {
+    for (let [key, t] of this._btn) {
+      if (t > 0) {
+        t += dt
+      } else if (t < 0) {
+        t = appr(t, 0, dt)
+      }
+      if (!this.skip_update) {
+        this._btn0.set(key, this._btn.get(key))
+        this._btn.set(key, t)
+      }
+    }
+    this.skip_update = false
+  }
 
-  constructor() {
+  init() {
 
     let { press, release } = this
 
     document.addEventListener('keydown', e => {
+      e.preventDefault()
       switch(e.key) {
         case 'ArrowUp':
           press('up');
@@ -68,6 +90,7 @@ export default class Input {
     });
 
     document.addEventListener('keyup', e => {
+      e.preventDefault()
       switch(e.key) {
         case 'ArrowUp':
           release('up');

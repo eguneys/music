@@ -3,7 +3,7 @@ import { FreeOnStaff } from './types'
 
 export type Config = {
   fen: Fen,
-  input?: true,
+  capture?: true,
   frees?: Array<FreeOnStaff>
 }
 

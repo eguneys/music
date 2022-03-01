@@ -17,6 +17,9 @@ export default function app(_config: Partial<Config>, element: HTMLElement) {
   let input = new Input()
 
 
+  if (config.capture) {
+    input.init()
+  }
 
 
   let ctrl = new Ctrl(input, config, redraw)
@@ -49,6 +52,7 @@ export default function app(_config: Partial<Config>, element: HTMLElement) {
     ctrl.update(dt, dt0)
     
     dt0 = dt 
+    timestamp0 = timestamp
     requestAnimationFrame(step)
   }
   requestAnimationFrame(step) 

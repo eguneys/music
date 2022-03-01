@@ -85,24 +85,32 @@ body {
                     })
 
               let frees = [
-                      clef('gclef', 0, 5, 4),
-                      whole(1, 6, 4),
-                      whole(2, 2, 5),
-                      whole(3, 2, 4),
-                      whole(4, 1, 5),
-                      clef('bclef', 5, 2, 5),
-                      whole(6, 1, 5),
-                      whole(7, 2, 5),
-                      whole(8, 5, 4),
-                      whole(9, 3, 5),
+                      clef('gclef', 0.25, 5, 4),
+                      whole(1.25, 6, 4),
+                      whole(2.25, 2, 5),
+                      whole(3.25, 2, 4),
+                      whole(4.25, 1, 5),
+                      clef('bclef', 5.25, 2, 5),
+                      whole(6.25, 1, 5),
+                      whole(7.25, 2, 5),
+                      whole(8.25, 5, 4),
+                      whole(9.25, 3, 5),
+                      clef('gclef', 10.25, 5, 4),
+                      whole(11.25, 1, 4),
+                      whole(12.25, 7, 5),
+                      whole(13.25, 6, 4),
+                      whole(14.25, 3, 4),
+                      clef('bclef', 15.25, 2, 5),
+                      whole(16.25, 6, 4),
+                      whole(17.25, 1, 4),
+                      whole(18.25, 7, 5),
+                      whole(19.25, 7, 4),
                     ]
 
 
               Space({ frees }, document.getElementById('app1'))
               
-              Space({ fen: `
-bclef 'F'F3 'G'G3/'E'E3 'A'A3/'D'D3 'B'B3/'C'C3 'B'B2 'A'A2 'G'G2 'F'F2
-     `}, document.getElementById('app2'))
+              Space({ capture: true }, document.getElementById('app2'))
 
               Space({ fen: `
 brace
