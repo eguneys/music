@@ -55,6 +55,13 @@ export default class Input {
     return this._btn0.get(key) || this.btn(key)
   }
 
+
+  btnp = (key: string) => {
+    let btn = this._btn.get(key),
+      btn0 = this._btn0.get(key)
+    return btn > 0 && !(btn0 > 0)
+  }
+
   update = (dt: number, dt0: number) => {
     for (let [key, t] of this._btn) {
       if (t > 0) {

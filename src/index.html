@@ -110,13 +110,9 @@ body {
 
               Space({ frees }, document.getElementById('app1'))
               
-              Space({ capture: true }, document.getElementById('app2'))
+              Space({ }, document.getElementById('app2'))
 
-              Space({ fen: `
-brace
-gclef 'G'G3/G4w 'F'G3/F4w 'E'G3/E4w 'D'G3/D4w 'C'G3/C4w
-bclef 'F'C2/F3w 'G'C2/G3w 'A'C2/A3w 'B'C2/B3w 'C'C2/C4w
-     `}, document.getElementById('app3'))
+              Space({ capture: true }, document.getElementById('app3'))
 
               Space({ fen: `
 brace

@@ -3,9 +3,11 @@ import Ctrl from './ctrl'
 
 import g from './glyphs'
 
+import { Tempo, tempo_tempo } from './music'
 import { FreeOnStaff } from './types'
 
 export default function view(ctrl: Ctrl) {
+
   return h('div.m-wrap', [
     h('staff', [
       h('lines', [
@@ -15,8 +17,22 @@ export default function view(ctrl: Ctrl) {
         h('line'),
         h('line'),
       ]),
+      ctrl.tempo ? tempo(ctrl, ctrl.tempo) : null,
       ...ctrl.frees.map(_ => free_on_staff(_))
     ])
+  ])
+}
+
+export function tempo(ctrl: Ctrl, tempo: Tempo) {
+
+  return h('span.tempo', {
+    style: {
+      transform: `translate(1em, -2.5em)`
+    }
+  }, [
+    h('span', g['quarter_text']),
+    h('span.strong', '='),
+    h('span.strong', tempo_tempo(tempo))
   ])
 }
 

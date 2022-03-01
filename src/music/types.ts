@@ -19,6 +19,9 @@ export type NoteValue = 2 | 4 | 8 | 16
 
 export type TimeSignature = number
 
+export type Tempo = 1 | 2 | 3 | 4 | 5 | 6
+
+
 export type Text = string
 
 export type Notation = {
@@ -35,6 +38,8 @@ export type Staff = {
   time: TimeSignature,
   notes: Array<Notations>
 }
+
+const tempos = [60, 80, 90, 120, 168, 200]
 
 const pitches = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
 const octaves = ['0', '1', '2', '3', '4', '5', '6']
@@ -183,4 +188,13 @@ export function uci_note_value(note_value: number): NoteValue | undefined {
   if (note_values.includes(note_value)) {
     return note_value as NoteValue
   }
+}
+
+
+export function tempo_tempo(tempo: Tempo) {
+  return tempos[tempo - 1]
+}
+
+export function is_tempo(tempo: number): tempo is Tempo {
+  return tempo >= 1 && tempo <= 6
 }

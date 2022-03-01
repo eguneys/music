@@ -19,14 +19,18 @@ const ten_time = one_time + zero_time
 const twelve_time = one_time + two_time
 
 
+const quarter_text = ''
+
 export type GlyphMap = {
   [key: string]: string
 }
 
 export default {
+  quarter_text,
   gclef,
   bclef,
   half_note,
+  quarter_note,
   whole_note,
   brace,
   zero_time,
