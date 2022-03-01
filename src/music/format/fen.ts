@@ -1,6 +1,6 @@
-import { uci_note, uci_clef, uci_nb_note_value, uci_note_value } from '../types'
+import { uci_note, uci_clef } from '../types'
 import { make_time_signature } from '../types'
-import { Staff, Notations, TimeSignature } from '../types'
+import { Staff, TimeSignature } from '../types'
 
 export type Fen = string
 
@@ -39,21 +39,18 @@ export function fen_staff(fen: string): Staff | undefined {
 
   if (time) { _notes.splice(0, 1) }
 
-  let notes: Array<Notations> = _notes.flatMap(_ => {
-    let res = read_notation(_)
-    return !res ? [] : [res]
-  })
-
   if (clef) {
     return {
       clef,
       time: time || 4,
-      notes
+      measures: []
     }
   }
 }
 
 export function read_time(time: string): TimeSignature | undefined {
+  return undefined
+  /*
   let [_nb_note_value, _note_value] = time.split('/')
 
   let nb_note_value = uci_nb_note_value(parseInt(_nb_note_value)),
@@ -62,27 +59,6 @@ export function read_time(time: string): TimeSignature | undefined {
   if (nb_note_value && note_value) {
     return make_time_signature(nb_note_value, note_value)
   }
+   */
 }
 
-export function read_notation(notation: string): Notations {
-  let n = notation[0]
-
-  return notation.split('/').flatMap(n => {
-    let res = n.match(/'([a-zA-Z0-9]*)'(.*)$/)
-    if (!res) {
-      let note = uci_note(n)
-      if (note) {
-        return note
-      }
-      return []
-    }
-
-    let [_, text, _note] = res
-
-    let note = uci_note(_note)
-    if (note) {
-      return { text, note }
-    }
-    return []
-  })
-}

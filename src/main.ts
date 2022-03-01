@@ -33,6 +33,7 @@ export default function app(_config: Partial<Config>, element: HTMLElement) {
   }
 
 
+  redraw()
 
   let fixed_dt = 1000/60
   let timestamp0: number | undefined,

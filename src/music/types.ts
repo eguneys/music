@@ -13,16 +13,19 @@ export type Clef = 1 | 2
 
 export type BarLine = 1 | 2
 
+export type Rest = Duration
 
 export type NbNoteValuePerMeasure = 2 | 3 | 4 | 6 | 9 | 12
-export type NoteValue = 2 | 4 | 8 | 16
+export type NoteValue = 1 | 2 | 3 | 4
 
 export type TimeSignature = number
 
 export type Tempo = 1 | 2 | 3 | 4 | 5 | 6
 
+export type Nore = Note | Rest
+
 export type Measure = {
-  notes: Array<Note>
+  nores: Array<Nore>
 }
 
 export type Staff = {
@@ -30,6 +33,8 @@ export type Staff = {
   time: TimeSignature,
   measures: Array<Measure>
 }
+
+const note_values = [2, 4, 8, 16]
 
 const tempos = [60, 80, 90, 120, 168, 200]
 
@@ -156,32 +161,16 @@ export function uci_clef(clef: string) {
 
 export function make_time_signature(nb_note_value: NbNoteValuePerMeasure, note_value: NoteValue) {
 
-  return nb_note_value * 32 + note_value
+  return nb_note_value * 8 + note_value
 }
 
 export function time_nb_note_value(signature: TimeSignature): NbNoteValuePerMeasure {
-  return Math.floor(signature / 32) as NbNoteValuePerMeasure
+  return Math.floor(signature / 8) as NbNoteValuePerMeasure
 }
 
 export function time_note_value(signature: TimeSignature): NoteValue {
-  return signature % 32 as NoteValue
+  return signature % 8 as NoteValue
 }
-
-const nb_note_values = [2 , 3 , 4 , 6 , 9, 12]
-const note_values = [2 , 4 , 8 , 16]
-
-export function uci_nb_note_value(nb_note_value: number): NbNoteValuePerMeasure | undefined {
-  if (nb_note_values.includes(nb_note_value)) {
-    return nb_note_value as NbNoteValuePerMeasure
-  }
-}
-
-export function uci_note_value(note_value: number): NoteValue | undefined {
-  if (note_values.includes(note_value)) {
-    return note_value as NoteValue
-  }
-}
-
 
 export function tempo_tempo(tempo: Tempo) {
   return tempos[tempo - 1]
@@ -189,4 +178,14 @@ export function tempo_tempo(tempo: Tempo) {
 
 export function is_tempo(tempo: number): tempo is Tempo {
   return tempo >= 1 && tempo <= 6
+}
+
+
+
+export function make_measure(signature: TimeSignature) {
+  let beats = time_nb_note_value(signature) 
+  let unit = time_note_value(signature)
+
+  let nores = [...Array(beats)]
+  return { nores }
 }
