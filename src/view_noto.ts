@@ -8,7 +8,7 @@ import { time_nb_note_value, time_note_value } from './music'
 
 export default function view(ctrl: Ctrl) {
 
-  let { music } = ctrl
+  let music: any
 
   if (Array.isArray(music)) {
 

@@ -1,5 +1,11 @@
 import { ticks } from './shared'
 
+let RE = /^[A-Za-z0-9\+\-;']$/
+let RE2 = /^(\s|Left|Right)$/
+function capture_key(key: string) {
+  return key.match(RE) || key.match(RE2)
+}
+
 function appr(value: number, target: number, dt: number)  {
   if (value < target) {
     return Math.min(value + dt, target)
@@ -69,6 +75,9 @@ export default class Input {
     let { press, release } = this
 
     document.addEventListener('keydown', e => {
+      if (e.ctrlKey || !capture_key(e.key)) {
+        return
+      }
       e.preventDefault()
       switch(e.key) {
         case 'ArrowUp':
@@ -90,6 +99,9 @@ export default class Input {
     });
 
     document.addEventListener('keyup', e => {
+      if (e.ctrlKey || !capture_key(e.key)) {
+        return
+      }
       e.preventDefault()
       switch(e.key) {
         case 'ArrowUp':

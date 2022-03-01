@@ -4,6 +4,8 @@
     "module": "esnext",
     "moduleResolution": "node",
     "inlineSources": true,
-    "target": "ES2018"
+    "inlineSourceMap": true,
+    "target": "ES2018",
+    "lib": ["ES2018", "dom"]
   }
 }
