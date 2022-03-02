@@ -5,6 +5,15 @@ const half_note = ''
 const quarter_note = ''
 const brace = ''
 
+const eighth_flag_up = ''
+const sixteenth_flag_up = ''
+
+const eighth_flag_down = ''
+const sixteenth_flag_down = ''
+
+
+const half_rest = ''
+
 const zero_time = ''
 const one_time = ''
 const two_time = ''
@@ -32,7 +41,12 @@ export default {
   half_note,
   quarter_note,
   whole_note,
+  eighth_flag_down,
+  sixteenth_flag_down,
+  eighth_flag_up,
+  sixteenth_flag_up,
   brace,
+  half_rest,
   zero_time,
   one_time,
   two_time,

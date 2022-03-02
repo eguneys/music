@@ -20,7 +20,7 @@ export type NoteValue = 1 | 2 | 3 | 4
 
 export type TimeSignature = number
 
-export type Tempo = 1 | 2 | 3 | 4 | 5 | 6
+export type Tempo = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
 
 export type Nore = Note | Rest
 
@@ -50,6 +50,17 @@ const pitch_mask =      0x0000000f
 const octave_mask =     0x000000f0
 const duration_mask =   0x00000f00
 const accidental_mask = 0x0000f000
+
+const note_1 = make_note(1, 1, 1)
+const note_n = make_note(7, 7, 8)
+
+export function is_note(n: number): n is Note {
+  return n >= note_1 && n <= note_n
+}
+
+export function is_rest(n: number): n is Rest {
+  return n >= 1 && n <= 8
+}
 
 export function make_note(pitch: Pitch, octave: Octave, duration: Duration, accidental?: Accidental) {
   return pitch | (octave << 4) | (duration << 8) | ((accidental || 0) << 12)
@@ -177,7 +188,7 @@ export function tempo_tempo(tempo: Tempo) {
 }
 
 export function is_tempo(tempo: number): tempo is Tempo {
-  return tempo >= 1 && tempo <= 6
+  return tempo >= 1 && tempo <= 8
 }
 
 
@@ -186,6 +197,8 @@ export function make_measure(signature: TimeSignature) {
   let beats = time_nb_note_value(signature) 
   let unit = time_note_value(signature)
 
-  let nores = [...Array(beats)]
+  let nores = [...Array(beats).keys()]
+  .map(i => unit)
+
   return { nores }
 }

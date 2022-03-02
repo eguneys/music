@@ -2,6 +2,7 @@
   width: 100%;
   font-family: Bravura;
   display: flex;
+  --line-width: 0.03em;
 }
 
 staff {
@@ -24,8 +25,8 @@ staff lines {
 }
 
 lines line {
-  padding-bottom: calc(0.25em - 0.02em);
-  border-top: 0.02em solid black;
+  padding-bottom: calc(0.25em - var(--line-width));
+  border-top: var(--line-width) solid black;
 }
 
 lines line:last-child {
@@ -57,4 +58,46 @@ staff span.tempo {
 
 .four_time {
   transform: translate(0.75em, 0.25em)
+}
+
+
+staff span.barline {
+  top: 2em;
+  width: var(--line-width);
+  border-left: var(--line-width) solid black;
+  height: 1em;
+}
+
+
+staff .cursor {
+  display: flex;
+  position: absolute;
+  top: 2em;
+  height: 3em;
+  width: 1em;
+  background: rgba(153, 153, 153, 0.5);
+}
+
+staff .cursor .fill {
+  height: 100%;
+  background-color: yellow;
+}
+
+staff.playing .cursor .fill {
+  animation-name: fill-width;
+  animation-fill-mode: forwards;
+  animation-timing-function: linear;
+}
+
+staff span.stem {
+  border-left: var(--line-width) solid black;
+}
+
+.stem.up {
+  top: 0.04em;
+}
+
+@keyframes fill-width {
+  from { width: 0; }
+  to { width: 100%; }
 }
