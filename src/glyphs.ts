@@ -12,7 +12,9 @@ const eighth_flag_down = ''
 const sixteenth_flag_down = ''
 
 
-const half_rest = ''
+const whole_rest = ''
+const half_rest = ''
+const quarter_rest = ''
 
 const zero_time = ''
 const one_time = ''
@@ -46,7 +48,9 @@ export default {
   eighth_flag_up,
   sixteenth_flag_up,
   brace,
+  whole_rest,
   half_rest,
+  quarter_rest,
   zero_time,
   one_time,
   two_time,

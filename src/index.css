@@ -38,6 +38,10 @@ staff > span {
   transform: translate(1.25em, -0.25em)
 }
 
+staff span.metronome {
+  opacity: 0.5;
+}
+
 staff span.tempo {
   font-size: 0.5em;
   display: flex;
@@ -76,6 +80,12 @@ staff .cursor {
   height: 3em;
   width: 1em;
   background: rgba(153, 153, 153, 0.5);
+  animation: fade-in;
+}
+
+staff .cursor.full {
+  animation: none;
+  background-color: yellow;
 }
 
 staff .cursor .fill {
@@ -97,7 +107,12 @@ staff span.stem {
   top: 0.04em;
 }
 
+@keyframes fade-in {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+}
+
 @keyframes fill-width {
-  from { width: 0; }
-  to { width: 100%; }
+  0% { width: 0; }
+  100% { width: 100%; }
 }

@@ -1,6 +1,5 @@
 import { h, VNode } from 'snabbdom'
-import Ctrl from './ctrl'
-
+import Ctrl, { Playback } from './ctrl'
 import g from './glyphs'
 
 import { Tempo, Pitch, Octave } from './music'
@@ -9,11 +8,9 @@ import { FreeOnStaff } from './types'
 export default function view(ctrl: Ctrl) {
   return h('div.m-wrap', [
     h('staff', { 
-      class: {
-        playing: ctrl.voices.length > 0
-      }
+      class: { playing: ctrl.playback.playing }
     }, [
-      cursor(0, ctrl.beat_duration/1000),
+      ...playback(ctrl, ctrl.playback),
       h('lines', [
         h('line'),
         h('line'),
@@ -21,7 +18,7 @@ export default function view(ctrl: Ctrl) {
         h('line'),
         h('line'),
       ]),
-      ctrl.tempo ? tempo(ctrl, ctrl.bpm) : null,
+      tempo(ctrl, ctrl.playback.bpm),
       ...ctrl.frees.flatMap(_ => [
         free_on_staff(_),
         ...stem(_),
@@ -62,9 +59,34 @@ export function stem(free: FreeOnStaff) {
   }, g[flag_code[stem.flag - 1] + '_' + direction]) : null]
 }
 
-export function cursor(ox: number, duration: number) {
-  return h('div.cursor', {
+export function playback(ctrl: Ctrl, playback: Playback) {
+  return [
+    /*
+    ...playback.history
+    .get_this_measure(playback.current_measure)
+    .map((voices, i) =>
+         cursor_full(i + 1)),
+    */
+    cursor(playback.current_beat, playback.beat_duration / 1000)
+  ]
+}
+
+let beats = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
+
+export function cursor_full(beat: number) {
+  let ox = beat
+  return h('div.cursor.full.beat_' + beats[beat], {
     style: {
+      transform: `translate(calc(2em + ${ox}em), -50%)`
+    }
+  })
+}
+
+export function cursor(beat: number, duration: number) {
+  let ox = beat
+  return h('div.cursor.beat_' + beats[beat], {
+    style: {
+      'animation-duration': `${duration}s`,
       transform: `translate(calc(2em + ${ox}em), -50%)`
     }
   }, [h('span.fill', {

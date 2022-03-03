@@ -21,8 +21,11 @@ export default function app(_config: Partial<Config>, element: HTMLElement) {
     input.init()
   }
 
+  let ctx = {
+    input
+  }
 
-  let ctrl = new Ctrl(input, config, redraw)
+  let ctrl = new Ctrl(ctx)._set_data(config).init()
 
   const blueprint = view(ctrl)
 
@@ -31,9 +34,6 @@ export default function app(_config: Partial<Config>, element: HTMLElement) {
   function redraw() {
     vnode = patch(vnode, view(ctrl))
   }
-
-
-  redraw()
 
   let fixed_dt = 1000/60
   let timestamp0: number | undefined,
@@ -51,6 +51,11 @@ export default function app(_config: Partial<Config>, element: HTMLElement) {
 
     input.update(dt, dt0)
     ctrl.update(dt, dt0)
+
+    if (ctrl._schedule_redraw) {
+      ctrl._schedule_redraw = false
+      redraw()
+    }
     
     dt0 = dt 
     timestamp0 = timestamp

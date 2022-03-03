@@ -1,10 +1,8 @@
 import { uci_note, uci_clef } from '../types'
 import { make_time_signature } from '../types'
-import { Staff, TimeSignature } from '../types'
+import { TimeSignature } from '../types'
 
 export type Fen = string
-
-export type Music = Staff | [Staff, Staff]
 
 // gclef 'G'g4 'A'a4/'F'f4 'B'b4/'E'e4 'C'c5/'D'd4 'D'd5 'E'e5 'F'f5 'G'g5
 //
@@ -16,6 +14,7 @@ export type Music = Staff | [Staff, Staff]
 // gclef 2/4 'G'g4 'A'a4/'F'f4 'B'b4/'E'e4 'C'c5/'D'd4 'D'd5 'E'e5 'F'f5 'G'g5
 //
 
+/*
 export function fen_music(fen: Fen): Music | undefined {
   let staff = fen.split('\n')
 
@@ -29,7 +28,9 @@ export function fen_music(fen: Fen): Music | undefined {
     return fen_staff(fen)
   }
 }
+*/
 
+/*
 export function fen_staff(fen: string): Staff | undefined {
   let [_clef, ..._notes] = fen.split(' ')
 
@@ -48,6 +49,7 @@ export function fen_staff(fen: string): Staff | undefined {
   }
 }
 
+*/
 export function read_time(time: string): TimeSignature | undefined {
   return undefined
   /*
@@ -61,4 +63,3 @@ export function read_time(time: string): TimeSignature | undefined {
   }
    */
 }
-

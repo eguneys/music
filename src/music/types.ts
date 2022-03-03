@@ -7,8 +7,6 @@ export type Accidental = 1 | 2
 
 export type Note = number
 
-export type Line = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
-
 export type Clef = 1 | 2
 
 export type BarLine = 1 | 2
@@ -22,17 +20,6 @@ export type TimeSignature = number
 
 export type Tempo = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
 
-export type Nore = Note | Rest
-
-export type Measure = {
-  nores: Array<Nore>
-}
-
-export type Staff = {
-  clef: Clef,
-  time: TimeSignature,
-  measures: Array<Measure>
-}
 
 const note_values = [2, 4, 8, 16]
 
@@ -81,33 +68,6 @@ export function note_duration(note: Note): Duration {
 export function note_accidental(note: Note): Accidental | undefined {
   return (note & accidental_mask) >> 12 as Accidental
 }
-
-// C4 -> 1 5 -> 1
-// B4 -> 7 5 -> 7
-// C5 -> 1 6 -> 8
-
-let line_test = 
-  [['C4', 1],
-    ['D4', 2], 
-    ['B4', 7], 
-    ['C5', 8], 
-    ['B5', 14]]
-/*
-line_test.map(([note, res]) =>
-              console.log(note, note_line(uci_note(note)), res))
-
-             */
-export function note_line(clef: Clef, note: Note): Line {
-
-  let pitch = note_pitch(note),
-    octave = note_octave(note)
-  if (clef === 1) {
-    return (octave - 6) * 7 + pitch + 7 as Line
-  } else {
-    return (octave - 4) * 7 + pitch + 5 as Line
-  }
-}
-
 
 export function uci_note(uci: string): Note | undefined {
 
@@ -192,13 +152,3 @@ export function is_tempo(tempo: number): tempo is Tempo {
 }
 
 
-
-export function make_measure(signature: TimeSignature) {
-  let beats = time_nb_note_value(signature) 
-  let unit = time_note_value(signature)
-
-  let nores = [...Array(beats).keys()]
-  .map(i => unit)
-
-  return { nores }
-}

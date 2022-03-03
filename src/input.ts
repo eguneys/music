@@ -13,6 +13,15 @@ function appr(value: number, target: number, dt: number)  {
     return Math.max(value - dt, target)
   }
 }
+
+type ButtonState = {
+  just_pressed: boolean,
+  just_released: boolean,
+  t: number,
+  t0: number
+}
+
+
 export default class Input {
 
 
@@ -25,56 +34,56 @@ export default class Input {
   }
 
 
-  _btn = new Map()
-  _btn0 = new Map()
-
-  skip_update = false
+  _btn = new Map<string, ButtonState>()
 
   private press = (key: string) => {
-    if (!this._btn.has(key) || this._btn.get(key) === 0) {
-      this._btn0.set(key, this._btn.get(key))
-      this._btn.set(key, ticks.one)
-      this.skip_update = true
+    if (!this._btn.has(key)) {
+      this._btn.set(key, {
+        just_pressed: true,
+        just_released: false,
+        t: 0,
+        t0: 0
+      })
+      return
     }
+    this._btn.get(key)!.just_pressed = true
   }
 
 
   private release = (key: string) => {
-    if (this._btn.has(key) && this._btn.get(key) > 0) {
-      this._btn0.set(key, this._btn.get(key))
-      this._btn.set(key, -ticks.three)
-      this.skip_update = true
+    let res = this._btn.get(key)
+    if (res) {
+      res.just_released = true
     }
   }
 
   btn = (key: string) => {
-    return this._btn.get(key) || 0
+    return this._btn.get(key)?.t || 0
   }
 
   btn0 = (key: string) => {
-    return this._btn0.get(key) || this.btn(key)
+    return this._btn.get(key)?.t0 || 0
   }
 
 
   btnp = (key: string) => {
-    let btn = this._btn.get(key),
-      btn0 = this._btn0.get(key)
-    return btn > 0 && !(btn0 > 0)
+    return this.btn(key) > 0 && this.btn0(key) === 0
   }
 
   update = (dt: number, dt0: number) => {
-    for (let [key, t] of this._btn) {
-      if (t > 0) {
-        t += dt
-      } else if (t < 0) {
-        t = appr(t, 0, dt)
+    for (let [key, s] of this._btn) {
+      if (s.just_pressed || s.t > 0) {
+        s.t0 = s.t
+        s.t += dt
+        s.just_pressed = false
       }
-      if (!this.skip_update) {
-        this._btn0.set(key, this._btn.get(key))
-        this._btn.set(key, t)
+
+      if (s.just_released) {
+        s.t0 = s.t
+        s.t = 0
+        s.just_released = false
       }
     }
-    this.skip_update = false
   }
 
   init() {
