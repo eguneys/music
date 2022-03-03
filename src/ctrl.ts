@@ -2,11 +2,12 @@ import { ticks } from './shared'
 import * as util from './util'
 import { Clef, Pitch, Octave, Duration, Tempo, TimeSignature } from './music'
 import { make_note, make_time_signature, is_tempo, is_note, is_rest } from './music'
-import { note_pitch, note_octave, note_duration } from './music'
-import { time_nb_note_value } from './music'
+import { Note, note_pitch, note_octave, note_duration } from './music'
+import { time_nb_note_value, time_note_value } from './music'
 
 import { Beat, Measure, BeatQuanti, BeatMeasure } from './music'
 import { bm_beat, bm_quanti, bm_measure, make_bm } from './music'
+import { BeatMeasureNoteRest, make_bmnr } from './music'
 
 import { Config } from './config'
 import Input from './input'
@@ -14,6 +15,44 @@ import Input from './input'
 import { FreeOnStaff } from './types'
 
 export type Redraw = () => void
+
+type Context = {
+  input: Input
+}
+
+abstract class IPlay {
+
+  _schedule_redraw = true
+
+  data: any
+
+  get input() { return this.ctx.input }
+  constructor(readonly ctx: Context) {}
+
+
+  _set_data(data: any) {
+    this.data = data
+    return this
+  }
+
+  init(): this {
+    this._init()
+    return this
+  }
+
+  redraw() {
+    this._schedule_redraw = true
+  }
+
+  update(dt: number, dt0: number) {
+    this._update(dt, dt0)
+  }
+
+  abstract _init(): void;
+  abstract _update(dt: number, dt0: number): void;
+}
+
+
 
 
 let btn_pitches = [' ', 'j', 'k', 'l', ';', '\'', '\\']
@@ -64,44 +103,37 @@ function note_duration_flag(duration: Duration) {
   return duration_flag_codes[duration - 1]
 }
 
-type Context = {
-  input: Input
+export class BeatDivido {
+
+  bmnrs: Array<BeatMeasureNoteRest> = []
+
+  get nb_beats() {
+    return time_nb_note_value(this.time_signature)
+  }
+
+  get note_value() {
+    return time_note_value(this.time_signature)
+  }
+
+  constructor(readonly time_signature: TimeSignature) {}
+
+  add_note(bm: BeatMeasure, note: Note) {
+    let measure = bm_measure(bm, this.nb_beats),
+      beat = bm_beat(bm, this.nb_beats),
+      quanti = bm_quanti(bm)
+
+    let nb_beats = Math.pow(2, this.note_value - note_duration(note))
+
+
+
+  }
+
+  add_measure() {
+    [...Array(this.nb_beats)].forEach(_ => 
+      this.bmnrs.push(make_bmnr(make_bm(0, 1, 0, this.nb_beats), this.note_value)))
+  }
+
 }
-
-abstract class IPlay {
-
-  _schedule_redraw = true
-
-  data: any
-
-  get input() { return this.ctx.input }
-  constructor(readonly ctx: Context) {}
-
-
-  _set_data(data: any) {
-    this.data = data
-    return this
-  }
-
-  init(): this {
-    this._init()
-    return this
-  }
-
-  redraw() {
-    this._schedule_redraw = true
-  }
-
-  update(dt: number, dt0: number) {
-    this._update(dt, dt0)
-  }
-
-  abstract _init(): void;
-  abstract _update(dt: number, dt0: number): void;
-}
-
-
-
 
 export class Playback extends IPlay {
 

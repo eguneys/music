@@ -14,7 +14,7 @@ export type BarLine = 1 | 2
 export type Rest = Duration
 
 export type NbNoteValuePerMeasure = 2 | 3 | 4 | 6 | 9 | 12
-export type NoteValue = 1 | 2 | 3 | 4
+export type NoteValue = Duration
 
 export type TimeSignature = number
 
@@ -132,15 +132,15 @@ export function uci_clef(clef: string) {
 
 export function make_time_signature(nb_note_value: NbNoteValuePerMeasure, note_value: NoteValue) {
 
-  return nb_note_value * 8 + note_value
+  return nb_note_value * 16 + note_value
 }
 
 export function time_nb_note_value(signature: TimeSignature): NbNoteValuePerMeasure {
-  return Math.floor(signature / 8) as NbNoteValuePerMeasure
+  return Math.floor(signature / 16) as NbNoteValuePerMeasure
 }
 
 export function time_note_value(signature: TimeSignature): NoteValue {
-  return signature % 8 as NoteValue
+  return signature % 16 as NoteValue
 }
 
 export function tempo_tempo(tempo: Tempo) {
