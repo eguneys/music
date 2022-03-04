@@ -132,39 +132,32 @@ export class BeatDivido {
     let start_i,
       end_i
     let i_quanti = 0
+
     for (let i = 0; i < this.bmnrs.length; i++) {
 
       let bmnr = this.bmnrs[i]
       let _bm = bmnr_bm(bmnr)
 
+      if (start_i === undefined) {
 
-      if (i_quanti >= start_quanti || i_quanti + _bm >= start_quanti) {
-        start_i = i
-        break
+        if (i_quanti <= start_quanti && start_quanti <= i_quanti+_bm) {
+          start_i = i
+        }
+      } else if (end_i === undefined) {
+        if (i_quanti <= end_quanti && end_quanti <= i_quanti + _bm) {
+          end_i = i
+          break
+        }
       }
-
 
       i_quanti += _bm
     }
 
-    if (start_i !== undefined) {
-      for (let j = start_i; j < this.bmnrs.length; j++) {
-        let bmnr = this.bmnrs[j]
-        let _bm = bmnr_bm(bmnr)
-
-        if (i_quanti >= end_quanti || i_quanti + _bm >= end_quanti) {
-          end_i = j
-          break
-        }
-
-        i_quanti += bm
-      }
-
-      if (end_i !== undefined) {
-        let i_bmnr = make_bmnr(bm, note)
-        this.bmnrs.splice(start_i, end_i - start_i + 1, i_bmnr)
-        return true
-      }
+    if (start_i !== undefined && end_i !== undefined) {
+      let i_bmnr = make_bmnr(nb_quanti, note)
+      let removed = this.bmnrs.splice(start_i, end_i - start_i + 1, i_bmnr)
+      console.log(removed, i_bmnr)
+      return true
     }
 
     return false
@@ -280,7 +273,7 @@ export class Playback extends IPlay {
 
         let po = voice_pitch_octave(_)
         if (po) {
-          this.divido.add_note(_.start, make_note(...po, 4))
+          this.divido.add_note(_.start, make_note(...po, 2))
           this.redraw()
         }
       }
@@ -322,6 +315,8 @@ export default class Ctrl extends IPlay {
     res.push({ code: 'two_time', klass: '', pitch: 5 as Pitch, octave: 4 as Octave, ox: 1, oy: 0 })
     res.push({ code: 'four_time', klass: '', pitch: 2 as Pitch, octave: 5 as Octave, ox: 1, oy: 0 })
 
+    let ox = 2
+
     this.playback.divido.bmnrs.forEach(bmnr => {
 
       let bm = bmnr_bm(bmnr),
@@ -330,7 +325,6 @@ export default class Ctrl extends IPlay {
       let beat = bm_beat(bm, this.playback.beats_per_measure),
         quanti = bm_quanti(bm)
 
-      let ox = 2 + beat + quanti
 
       if (is_note(nr)) {
         let pitch = note_pitch(nr),
@@ -341,6 +335,7 @@ export default class Ctrl extends IPlay {
         res.push({ code: 'half_rest', klass: '', pitch: 7 as Pitch, octave: 4 as Octave, ox, oy: 0 })
       }
 
+      ox += beat + quanti
     })
 
     return res
