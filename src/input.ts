@@ -72,6 +72,9 @@ export default class Input {
 
   update = (dt: number, dt0: number) => {
     for (let [key, s] of this._btn) {
+      if (s.t === 0) {
+        s.t0 = s.t
+      }
       if (s.just_pressed || s.t > 0) {
         s.t0 = s.t
         s.t += dt

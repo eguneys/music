@@ -10,6 +10,8 @@ import Input from './input'
 
 import { Config, configure } from './config'
 
+import './_test'
+
 export default function app(_config: Partial<Config>, element: HTMLElement) {
 
   let config = configure(_config)
