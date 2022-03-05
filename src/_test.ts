@@ -24,7 +24,7 @@ export default function run() {
   is(d.bmnrs.length, 4)
   is(d.bmnrs[0], make_bmnr(w_beat, 2))
 
-  d.add_note(make_bm(0, 0, 0, 4), make_note(1, 4, 2))
+  //d.add_note(make_bm(0, 0, 0, 4), make_note(1, 4, 2))
 
   is(d.bmnrs.length, 4)
   is(d.bmnrs[0], make_bmnr(w_beat, make_note(1, 4, 2)))

@@ -74,7 +74,7 @@ export function playback(ctrl: Ctrl, playback: Playback) {
 let beats = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
 
 export function cursor_full(beat: number) {
-  let ox = beat
+  let ox = beat * 2
   return h('div.cursor.full.beat_' + beats[beat], {
     style: {
       transform: `translate(calc(2em + ${ox}em), -50%)`
@@ -83,7 +83,7 @@ export function cursor_full(beat: number) {
 }
 
 export function cursor(beat: number, duration: number) {
-  let ox = beat
+  let ox = beat * 2
   return h('div.cursor.beat_' + beats[beat], {
     style: {
       'animation-duration': `${duration}s`,
@@ -99,7 +99,7 @@ export function cursor(beat: number, duration: number) {
 export function barline() {
   return h('span.barline', {
     style: {
-      transform: `translate(6em, -50%)`
+      transform: `translate(12em, -50%)`
     }
   })
 }

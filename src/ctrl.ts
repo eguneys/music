@@ -14,6 +14,8 @@ import Input from './input'
 
 import { FreeOnStaff } from './types'
 
+import { PlayerController } from './audio/player'
+
 export type Redraw = () => void
 
 type Context = {
@@ -57,8 +59,9 @@ abstract class IPlay {
 
 let btn_pitches = [' ', 'j', 'k', 'l', ';', '\'', '\\']
 let btn_pitches_octave_up = ['a', 's', 'd', 'f', 'g', 'h']
+let btn_rest = 'Backspace'
 
-let btn_pitches_all = [...btn_pitches, ...btn_pitches_octave_up]
+let btn_pitches_all = [...btn_pitches, ...btn_pitches_octave_up, btn_rest]
 
 
 // TODO GC
@@ -79,6 +82,7 @@ const tempos = [10, 60, 80, 90, 120, 168, 200, 400]
 
 type Voice = {
   key: string,
+  instrument_id?: number,
   start: BeatMeasure,
   end?: BeatMeasure
 }
@@ -93,9 +97,14 @@ function how_many_quantis(start: BeatMeasure, end: BeatMeasure) {
 
 const metronome_key = 'metronome_key'
 
-const duration_codes = ['double_note', 'whole_note', 'half_note', 'quarter_note', 'quarter_note', 'quarter_note', 'quarter_note', 'quarter_note']
+const duration_codes = ['double', 'whole', 'half', 'quarter', 'quarter', 'quarter', 'quarter', 'quarter']
 function note_duration_code(duration: Duration) {
-  return duration_codes[duration - 1]
+  return duration_codes[duration - 1] + '_note'
+}
+
+const rest_codes = ['double', 'whole', 'half', 'quarter', 'eighth', 'sixteenth', 'thirtysecond', 'sixtyfourth', 'onetwentyeighth']
+function rest_duration_code(duration: Duration) {
+  return rest_codes[duration - 1] + '_rest'
 }
 
 const duration_flag_codes = [undefined, undefined, undefined, undefined, 1, 2, 3, 4]
@@ -115,16 +124,54 @@ export class BeatDivido {
     return time_note_value(this.time_signature)
   }
 
+  get min_note_value() {
+    return 8
+  }
+
+  get min_quanti() {
+    return Math.max(1, Math.pow(2, this.note_value - this.min_note_value) * 8)
+  }
+
+  // TODO GC
+  get sub_quanties_for_note_values() {
+    let res: Array<BeatQuanti> = []
+    for (let i = this.note_value; i < this.min_note_value; i++) {
+      res.push(Math.max(1, Math.pow(2, this.note_value - i) * 8) as BeatQuanti)
+    }
+    return res
+  }
+
   constructor(readonly time_signature: TimeSignature) {}
 
-  add_note(bm: BeatMeasure, note: Note) {
+
+  /* https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/log */
+  quanti_note_value(quanti: BeatQuanti): Duration {
+    return this.note_value - Math.log(quanti / 8) / Math.log(2) as Duration
+  }
+
+
+  quanti_in_subs(quanti: BeatQuanti) {
+    return this.sub_quanties_for_note_values.reduce(([left, acc], sub_quanti) => {
+      let res = Math.floor(left / sub_quanti)
+      acc.push(res)
+      return [left - res * sub_quanti, acc] as [BeatQuanti, Array<number>]
+    }, [quanti, []] as [BeatQuanti, Array<number>])
+
+  }
+
+  add_note(bm: BeatMeasure, nb_quanti: BeatQuanti, po?: [Pitch, Octave]) {
     let measure = bm_measure(bm, this.nb_beats),
       beat = bm_beat(bm, this.nb_beats),
       quanti = bm_quanti(bm)
 
+    if (nb_quanti === 0) {
+      return
+    }
 
-    let nb_beats = Math.pow(2, this.note_value - note_duration(note)),
-      nb_quanti = nb_beats * 8
+    let [quantized_left, quantized_subs] = this.quanti_in_subs(nb_quanti)
+
+    nb_quanti = nb_quanti - quantized_left as BeatQuanti
+    let note_duration = this.quanti_note_value(nb_quanti)
 
     let start_quanti = beat * 8 + quanti,
       end_quanti = start_quanti + nb_quanti
@@ -133,6 +180,9 @@ export class BeatDivido {
       end_i
     let i_quanti = 0
 
+    let off_start = 0,
+    off_end = 0
+
     for (let i = 0; i < this.bmnrs.length; i++) {
 
       let bmnr = this.bmnrs[i]
@@ -140,11 +190,14 @@ export class BeatDivido {
 
       if (start_i === undefined) {
 
-        if (i_quanti <= start_quanti && start_quanti <= i_quanti+_bm) {
+        if (i_quanti <= start_quanti && start_quanti < i_quanti+_bm) {
+          off_start = start_quanti - i_quanti
           start_i = i
         }
-      } else if (end_i === undefined) {
+      } 
+      if (end_i === undefined) {
         if (i_quanti <= end_quanti && end_quanti <= i_quanti + _bm) {
+          off_end = i_quanti + _bm - end_quanti
           end_i = i
           break
         }
@@ -154,9 +207,27 @@ export class BeatDivido {
     }
 
     if (start_i !== undefined && end_i !== undefined) {
-      let i_bmnr = make_bmnr(nb_quanti, note)
-      let removed = this.bmnrs.splice(start_i, end_i - start_i + 1, i_bmnr)
-      console.log(removed, i_bmnr)
+      let [left, subs] = this.quanti_in_subs(off_start as BeatQuanti)
+      let [end_left, end_subs] = this.quanti_in_subs(off_end + left as BeatQuanti)
+
+      let b_notes = subs
+      .flatMap((_, i) => [...Array(_)]
+               .map(() =>
+                    make_bmnr(
+                      this.sub_quanties_for_note_values[i],
+                      this.quanti_note_value(this.sub_quanties_for_note_values[i])))
+              )
+
+      let e_notes = end_subs
+      .flatMap((_, i) => [...Array(_)]
+               .map(() =>
+                    make_bmnr(
+                      this.sub_quanties_for_note_values[i],
+                      this.quanti_note_value(this.sub_quanties_for_note_values[i]))))
+
+      let i_bmnr = make_bmnr(nb_quanti, po?make_note(po[0], po[1], note_duration):note_duration)
+      let removed = this.bmnrs.splice(start_i, end_i - start_i + 1, ...b_notes, i_bmnr, ...e_notes)
+
       return true
     }
 
@@ -200,6 +271,10 @@ export class Playback extends IPlay {
     return bm_beat(this.bm, this.beats_per_measure)
   }
 
+  get schedule_next_time(): number {
+    return this.instrument.currentTime
+  }
+
   measure0?: Measure
   beat0?: Beat
 
@@ -211,12 +286,15 @@ export class Playback extends IPlay {
   bm!: BeatMeasure
   repeat?: [BeatMeasure, BeatMeasure]
 
-  tempo: Tempo = 3
+  tempo: Tempo = 2
 
   voices!: Array<Voice>
   divido!: BeatDivido
 
+  instrument!: PlayerController
+
   _init() {
+    this.instrument = new PlayerController()
     this.bm = 0
     this.voices = []
     this.playing = true
@@ -238,6 +316,7 @@ export class Playback extends IPlay {
       if (this.repeat) {
         if (this.bm >= this.repeat[1]) {
           this.bm = this.repeat[0]
+          this.voices.forEach(_ => _.instrument_id && this.instrument.release(_.instrument_id, this.schedule_next_time))
           this.voices = []
         }
       }
@@ -254,7 +333,12 @@ export class Playback extends IPlay {
 
       if (x > 0) {
         if (x0 === 0) {
-          this.voices.push({ key, start: this.bm })
+          let voice: Voice = { key, start: this.bm }
+          let po = voice_pitch_octave(voice)
+          if (po) {
+            voice.instrument_id = this.instrument.attack(make_note(po[0], po[1], 1), this.schedule_next_time)
+          }
+          this.voices.push(voice)
         }
       } else if (x === 0) {
         if (x0 > 0) {
@@ -267,18 +351,15 @@ export class Playback extends IPlay {
     })
 
     this.voices = this.voices.filter(_ => {
-      let res = !_.end || _.end > this.bm
-
-      if (!res) {
-
-        let po = voice_pitch_octave(_)
-        if (po) {
-          this.divido.add_note(_.start, make_note(...po, 2))
-          this.redraw()
+      if (_.end !== undefined) {
+        if (_.instrument_id) {
+          this.instrument.release(_.instrument_id, this.schedule_next_time)
         }
+        this.divido.add_note(_.start, _.end - _.start as BeatQuanti, voice_pitch_octave(_))
+        this.redraw()
+        return false
       }
-
-      return res
+      return true
     })
 
     if (this.tempo) {
@@ -325,17 +406,25 @@ export default class Ctrl extends IPlay {
       let beat = bm_beat(bm, this.playback.beats_per_measure),
         quanti = bm_quanti(bm)
 
-
       if (is_note(nr)) {
         let pitch = note_pitch(nr),
-          octave = note_octave(nr)
+          octave = note_octave(nr),
+          duration = note_duration(nr)
 
-        res.push({ code: 'half_note', klass: '', pitch, octave, ox, oy: 0 })
+
+        let flag = note_duration_flag(duration)
+
+        let stem = duration > 2 ? {
+          direction: 1,
+          flag
+        } : undefined
+
+        res.push({ stem, code: note_duration_code(duration), klass: '', pitch, octave, ox, oy: 0 })
       } else {
-        res.push({ code: 'half_rest', klass: '', pitch: 7 as Pitch, octave: 4 as Octave, ox, oy: 0 })
+        res.push({ code: rest_duration_code(nr), klass: '', pitch: 7 as Pitch, octave: 4 as Octave, ox, oy: 0 })
       }
 
-      ox += beat + quanti
+      ox += (beat + quanti / 8) * 2
     })
 
     return res

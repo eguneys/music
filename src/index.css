@@ -64,6 +64,11 @@ staff span.tempo {
   transform: translate(0.75em, 0.25em)
 }
 
+/* https://github.com/steinbergmedia/bravura/issues/8 */ 
+staff span.whole_rest {
+  top: -0.25em;
+}
+
 
 staff span.barline {
   top: 2em;
@@ -78,7 +83,7 @@ staff .cursor {
   position: absolute;
   top: 2em;
   height: 3em;
-  width: 1em;
+  width: 2em;
   background: rgba(153, 153, 153, 0.5);
   animation: fade-in;
 }

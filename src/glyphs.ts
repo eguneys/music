@@ -1,5 +1,7 @@
 const gclef = ''
 const bclef = ''
+
+const double_note = ''
 const whole_note = ''
 const half_note = ''
 const quarter_note = ''
@@ -15,6 +17,11 @@ const sixteenth_flag_down = ''
 const whole_rest = ''
 const half_rest = ''
 const quarter_rest = ''
+const eighth_rest = ''
+const sixteenth_rest = ''
+const thirtysecond_rest = ''
+const sixtyfourth_rest = ''
+const onetwentyeighth_rest = ''
 
 const zero_time = ''
 const one_time = ''
@@ -40,9 +47,10 @@ export default {
   quarter_text,
   gclef,
   bclef,
+  double_note,
+  whole_note,
   half_note,
   quarter_note,
-  whole_note,
   eighth_flag_down,
   sixteenth_flag_down,
   eighth_flag_up,
@@ -51,6 +59,11 @@ export default {
   whole_rest,
   half_rest,
   quarter_rest,
+  eighth_rest,
+  sixteenth_rest,
+  thirtysecond_rest,
+  sixtyfourth_rest,
+  onetwentyeighth_rest,
   zero_time,
   one_time,
   two_time,
