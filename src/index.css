@@ -104,6 +104,12 @@ staff.playing .cursor .fill {
   animation-timing-function: linear;
 }
 
+staff.countdown .cursor .fill {
+  height: 0%;
+  width: 4%;
+  background-color: green;
+}
+
 staff span.stem {
   border-left: var(--line-width) solid black;
 }

@@ -9,6 +9,7 @@ export default function view(ctrl: Ctrl) {
   return h('div.m-wrap', [
     h('staff.take_' + ctrl.playback.repeat_take, { 
       class: { 
+        countdown: ctrl.playback.countdown_bm !== undefined,
         playing: ctrl.playback.playing
       }
     }, [
@@ -30,7 +31,7 @@ export default function view(ctrl: Ctrl) {
   ])
 }
 
-const flag_code = ['eighth_flag', 'sixteenth_flag']
+const flag_code = ['eighth_flag', 'sixteenth_flag', 'thirtysecond_flag', 'sixtyfourth_flag']
 
 export function stem(free: FreeOnStaff) {
 
@@ -69,7 +70,7 @@ export function playback(ctrl: Ctrl, playback: Playback) {
     .map((voices, i) =>
          cursor_full(i + 1)),
     */
-    cursor(playback.current_beat, playback.beat_duration / 1000)
+    cursor(playback.current_beat, playback.beat_duration / 1000, playback.countdown_ni),
   ]
 }
 
@@ -84,14 +85,19 @@ export function cursor_full(beat: number) {
   })
 }
 
-export function cursor(beat: number, duration: number) {
+export function cursor(beat: number, duration: number, countdown_ni?: number) {
   let ox = beat * 2
   return h('div.cursor.beat_' + beats[beat], {
     style: {
       'animation-duration': `${duration}s`,
       transform: `translate(calc(2em + ${ox}em), -50%)`
     }
-  }, [h('span.fill', {
+  }, [countdown_ni ? h('span.countdown.fill', {
+    style: {
+      'animation-duration': `${duration}s`,
+      height: `${countdown_ni * 100}%`
+    }
+  }): h('span.fill', {
     style: {
       'animation-duration': `${duration}s`
     }

@@ -9,10 +9,13 @@ const brace = ''
 
 const eighth_flag_up = ''
 const sixteenth_flag_up = ''
+const thirtysecond_flag_up = ''
+const sixtyfourth_flag_up = ''
 
 const eighth_flag_down = ''
 const sixteenth_flag_down = ''
-
+const thirtysecond_flag_down = ''
+const sixtyfourth_flag_down = ''
 
 const whole_rest = ''
 const half_rest = ''
@@ -53,8 +56,12 @@ export default {
   quarter_note,
   eighth_flag_down,
   sixteenth_flag_down,
+  thirtysecond_flag_down,
+  sixtyfourth_flag_down,
   eighth_flag_up,
   sixteenth_flag_up,
+  thirtysecond_flag_up,
+  sixtyfourth_flag_up,
   brace,
   whole_rest,
   half_rest,

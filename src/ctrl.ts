@@ -109,7 +109,7 @@ function rest_duration_code(duration: Duration) {
   return rest_codes[duration - 1] + '_rest'
 }
 
-const duration_flag_codes = [undefined, undefined, undefined, undefined, 1, 2, 3, 4]
+const duration_flag_codes = [undefined, undefined, undefined, undefined, 1, 2, 3, 4, 5]
 function note_duration_flag(duration: Duration) {
   return duration_flag_codes[duration - 1]
 }
@@ -121,7 +121,7 @@ function nb_note_value_code(nb_note_value: NbNoteValuePerMeasure) {
 
 const note_value_codes = [,, 'two', 'four', 'eight', 'sixteen']
 function note_value_code(note_value: NoteValue) {
-  return note_value_codes[note_value]
+  return note_value_codes[note_value - 1]
 }
 
 export class BeatDivido {
@@ -222,9 +222,9 @@ export class BeatDivido {
     nb_quanti = nb_quanti - quantized_left as BeatQuanti
     let note_duration = this.quanti_note_value(nb_quanti)
 
+    console.log(this.sub_quanties_for_note_values, this.note_value, nb_quanti, quantized_subs, note_duration)
     let start_quanti = beat * 8 + quanti as BeatQuanti,
       end_quanti = start_quanti + nb_quanti as BeatQuanti
-
 
     let [start_i, end_i, off_start, off_end] = this.scan_data(start_quanti, end_quanti)
 
@@ -247,9 +247,19 @@ export class BeatDivido {
                       this.sub_quanties_for_note_values[i],
                       this.quanti_note_value(this.sub_quanties_for_note_values[i]))))
 
-      let i_bmnr = make_bmnr(nb_quanti, po?make_note(po[0], po[1], note_duration):note_duration)
-      let removed = this.bmnrs.splice(start_i, end_i - start_i + 1, ...b_notes, i_bmnr, ...e_notes)
+      let i_notes = quantized_subs
+      .flatMap((_, i) => [...Array(_)]
+               .map(() =>
+                    make_bmnr(
+                      this.sub_quanties_for_note_values[i],
+                      po?make_note(po[0], po[1], 
+                                   this.quanti_note_value(this.sub_quanties_for_note_values[i])):
+                                   this.quanti_note_value(this.sub_quanties_for_note_values[i])
+                                  )))
 
+      //let i_bmnr = make_bmnr(nb_quanti, po?make_note(po[0], po[1], note_duration):note_duration)
+      let removed = this.bmnrs.splice(start_i, end_i - start_i + 1, ...b_notes, ...i_notes, ...e_notes)
+      
       return true
     }
 
@@ -322,6 +332,12 @@ export class Playback extends IPlay {
     return this.instrument.currentTime
   }
 
+  get countdown_ni(): number | undefined {
+    if (this.countdown_bm) {
+      return Math.floor((this.countdown_bm + 1) / 8) / 3
+    }
+  }
+
   measure0?: Measure
   beat0?: Beat
 
@@ -329,7 +345,10 @@ export class Playback extends IPlay {
 
 
   bm!: BeatMeasure
+  countdown?: BeatMeasure
   repeat?: [BeatMeasure, BeatMeasure]
+
+  countdown_bm?: BeatMeasure
 
   playing!: boolean
   repeat_take!: number
@@ -345,8 +364,10 @@ export class Playback extends IPlay {
     this.instrument = new PlayerController()
     this.bm = 0
     this.voices = []
-    this.playing = true
+    this.playing = false
     this.repeat_take = 1
+    this.countdown = make_bm(0, 3, 0, this.beats_per_measure)
+    this.countdown_bm = 0
 
     this.tempo = 2
 
@@ -359,13 +380,16 @@ export class Playback extends IPlay {
   _update(dt: number, dt0: number) {
     this.t_quanti += dt
 
-
     if (this.input.btnp(btn_reset)) {
       if (this.repeat) {
         this.divido.rest_interval(...this.repeat)
 
-        this.repeat_take++
-          this.bm = this.repeat[0]
+        this.countdown_bm = 0
+        this.t_quanti = 0
+        this.repeat_take = 1;
+        this.playing = false
+
+        this.bm = this.repeat[0]
         this.voices.forEach(_ => _.instrument_id && this.instrument.release(_.instrument_id, this.schedule_next_time))
         this.voices = []
 
@@ -375,8 +399,22 @@ export class Playback extends IPlay {
 
     if (this.t_quanti >= this.quanti_duration) {
       this.t_quanti = 0
-      this.bm++;
 
+
+      if (this.countdown) {
+        if (this.countdown_bm !== undefined) {
+          this.countdown_bm++;
+
+          if (this.countdown_bm >= this.countdown) {
+            this.countdown_bm = undefined
+            this.playing = true
+          }
+        } else {
+          this.bm++;
+        }
+      } else {
+        this.bm++;
+      }
 
       if (this.repeat) {
         if (this.bm >= this.repeat[1]) {
@@ -462,8 +500,8 @@ export default class Ctrl extends IPlay {
       note_value = time_note_value(this.playback.time_signature)
 
     res.push({ code: 'gclef', klass: '', pitch: 5 as Pitch, octave: 4 as Octave, ox: 0.2, oy: 0 })
-    res.push({ code: nb_note_value_codes[nb_note_value] + '_time', klass: '', pitch: 2 as Pitch, octave: 5 as Octave, ox: 1, oy: 0 })
-    res.push({ code: note_value_codes[note_value] + '_time', klass: '', pitch: 5 as Pitch, octave: 4 as Octave, ox: 1, oy: 0 })
+    res.push({ code: nb_note_value_code(nb_note_value) + '_time', klass: '', pitch: 2 as Pitch, octave: 5 as Octave, ox: 1, oy: 0 })
+    res.push({ code: note_value_code(note_value) + '_time', klass: '', pitch: 5 as Pitch, octave: 4 as Octave, ox: 1, oy: 0 })
 
     let ox = 2
 
@@ -501,7 +539,7 @@ export default class Ctrl extends IPlay {
 
 
   _init() {
-    let time = make_time_signature(4, 3)
+    let time = make_time_signature(4, 4)
     this.playback = new Playback(this.ctx)._set_data(time).init()
   }
 
