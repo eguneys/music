@@ -32,7 +32,7 @@ export type FreeOnStaff = {
   octave: Octave,
   ox: number,
   oy: number,
-  stem?: Stem
+  stem?: Stem,
 }
 
 

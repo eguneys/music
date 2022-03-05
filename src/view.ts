@@ -1,6 +1,7 @@
 import { h, VNode } from 'snabbdom'
 import Ctrl, { Playback } from './ctrl'
 import g from './glyphs'
+import { Voice } from './ctrl'
 
 import { Tempo, Pitch, Octave } from './music'
 import { FreeOnStaff } from './types'
@@ -41,6 +42,8 @@ export function stem(free: FreeOnStaff) {
 
   let { stem } = free
 
+  let klass = free.klass
+
   let x = 0
   let y = pitch_y(free.pitch, free.octave)
   let ox = free.ox,
@@ -48,13 +51,13 @@ export function stem(free: FreeOnStaff) {
 
   let direction = 'down'
 
-  return [h('span.stem.up', {
+  return [h('span.stem.up.' + klass, {
     style: {
       height: '0.9em',
       margin: '2em 0',
       transform: `translate(${ox}em, ${oy}em)`
     }
-  }), stem.flag ? h('span.flag', {
+  }), stem.flag ? h('span.flag.' + klass, {
     style: {
       'margin-top': '0.9em',
       transform: `translate(${ox}em, ${oy}em)`
@@ -70,7 +73,7 @@ export function playback(ctrl: Ctrl, playback: Playback) {
     .map((voices, i) =>
          cursor_full(i + 1)),
     */
-    cursor(playback.current_beat, playback.beat_duration / 1000, playback.countdown_ni),
+    cursor(playback.current_beat, playback.beat_duration / 1000, playback.countdown_ni)
   ]
 }
 

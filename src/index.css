@@ -1,4 +1,5 @@
 .m-wrap {
+  user-select: none;
   width: 100%;
   font-family: Bravura;
   display: flex;
@@ -39,6 +40,11 @@ staff > span {
 }
 
 staff span.metronome {
+  opacity: 0.5;
+}
+
+staff span.voice {
+  color: red;
   opacity: 0.5;
 }
 
@@ -112,6 +118,10 @@ staff.countdown .cursor .fill {
 
 staff span.stem {
   border-left: var(--line-width) solid black;
+}
+
+staff span.stem.voice {
+  border-left: var(--line-width) solid red;
 }
 
 .stem.up {

@@ -12,7 +12,7 @@ import { BeatMeasureNoteRest, make_bmnr, bmnr_bm, bmnr_nr } from './music'
 import { Config } from './config'
 import Input from './input'
 
-import { FreeOnStaff } from './types'
+import { FreeOnStaff, Direction } from './types'
 
 import { PlayerController } from './audio/player'
 
@@ -55,6 +55,23 @@ abstract class IPlay {
 }
 
 
+function free_note_parts(nr: Note, ox: number, klass: string = '') {
+  let pitch = note_pitch(nr),
+    octave = note_octave(nr),
+    duration = note_duration(nr)
+
+
+  let flag = note_duration_flag(duration)
+
+  let stem = duration > 2 ? {
+    direction: 1 as Direction,
+    flag
+  } : undefined
+
+  return [{ stem, code: note_duration_code(duration), klass, pitch, octave, ox, oy: 0 }]
+}
+
+
 
 
 let btn_pitches = [' ', 'j', 'k', 'l', ';', '\'', '\\']
@@ -82,7 +99,7 @@ function voice_pitch_octave(voice: Voice): [Pitch, Octave] | undefined {
 
 const tempos = [10, 60, 80, 90, 120, 168, 200, 400]
 
-type Voice = {
+export type Voice = {
   key: string,
   instrument_id?: number,
   start: BeatMeasure,
@@ -222,7 +239,7 @@ export class BeatDivido {
     nb_quanti = nb_quanti - quantized_left as BeatQuanti
     let note_duration = this.quanti_note_value(nb_quanti)
 
-    console.log(this.sub_quanties_for_note_values, this.note_value, nb_quanti, quantized_subs, note_duration)
+    console.log(beat, quanti, this.sub_quanties_for_note_values, this.note_value, nb_quanti, quantized_subs, note_duration, quantized_left)
     let start_quanti = beat * 8 + quanti as BeatQuanti,
       end_quanti = start_quanti + nb_quanti as BeatQuanti
 
@@ -328,13 +345,17 @@ export class Playback extends IPlay {
     return bm_beat(this.bm, this.beats_per_measure)
   }
 
+  get current_quanti(): BeatQuanti {
+    return bm_quanti(this.bm)
+  }
+
   get schedule_next_time(): number {
     return this.instrument.currentTime
   }
 
   get countdown_ni(): number | undefined {
     if (this.countdown_bm) {
-      return Math.floor((this.countdown_bm + 1) / 8) / 3
+      return Math.ceil((this.countdown_bm / 8)) / 3
     }
   }
 
@@ -419,9 +440,8 @@ export class Playback extends IPlay {
       if (this.repeat) {
         if (this.bm >= this.repeat[1]) {
           this.repeat_take++
+          this.voices.forEach(_ => _.end = this.bm)
           this.bm = this.repeat[0]
-          this.voices.forEach(_ => _.instrument_id && this.instrument.release(_.instrument_id, this.schedule_next_time))
-          this.voices = []
         }
       }
     }
@@ -514,25 +534,36 @@ export default class Ctrl extends IPlay {
         quanti = bm_quanti(bm)
 
       if (is_note(nr)) {
-        let pitch = note_pitch(nr),
-          octave = note_octave(nr),
-          duration = note_duration(nr)
-
-
-        let flag = note_duration_flag(duration)
-
-        let stem = duration > 2 ? {
-          direction: 1,
-          flag
-        } : undefined
-
-        res.push({ stem, code: note_duration_code(duration), klass: '', pitch, octave, ox, oy: 0 })
+        res.push(...free_note_parts(nr, ox))
       } else {
         res.push({ code: rest_duration_code(nr), klass: '', pitch: 7 as Pitch, octave: 4 as Octave, ox, oy: 0 })
       }
 
       ox += (beat + quanti / 8) * 2
     })
+
+
+    let voice = this.playback.voices[0]
+
+    if (voice) {
+      let po = voice_pitch_octave(voice)
+      if (po) {
+        // TODO make abstraction
+        let nb_quanti = this.playback.bm - voice.start as BeatQuanti
+
+        if (nb_quanti === 0) {
+          return res
+        }
+
+        let [quantized_left, quantized_subs] = this.playback.divido.quanti_in_subs(nb_quanti)
+
+        nb_quanti = nb_quanti - quantized_left as BeatQuanti
+        let note_duration = this.playback.divido.quanti_note_value(nb_quanti)
+
+        let nr = make_note(po[0], po[1], note_duration)
+        res.push(...free_note_parts(nr, 2 + (voice.start / 8) * 2, 'voice'))
+      }
+    }
 
     return res
   }
