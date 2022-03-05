@@ -1,7 +1,7 @@
 import { ticks } from './shared'
 
 let RE = /^[A-Za-z0-9\+\-;'\\]$/
-let RE2 = /^(\s|Left|Right|Backspace|Enter)$/
+let RE2 = /^(\s|Left|Right|Backspace|Enter|Tab)$/
 function capture_key(key: string) {
   return key.match(RE) || key.match(RE2)
 }
@@ -17,6 +17,7 @@ function appr(value: number, target: number, dt: number)  {
 type ButtonState = {
   just_pressed: boolean,
   just_released: boolean,
+  ctrl: boolean,
   t: number,
   t0: number
 }
@@ -36,11 +37,12 @@ export default class Input {
 
   _btn = new Map<string, ButtonState>()
 
-  private press = (key: string) => {
+  private press = (key: string, ctrl: boolean) => {
     if (!this._btn.has(key)) {
       this._btn.set(key, {
         just_pressed: true,
         just_released: false,
+        ctrl,
         t: 0,
         t0: 0
       })
@@ -100,19 +102,19 @@ export default class Input {
       e.preventDefault()
       switch(e.key) {
         case 'ArrowUp':
-          press('up');
+          press('up', e.ctrlKey);
           break;
         case 'ArrowDown':
-          press('down');
+          press('down', e.ctrlKey);
           break;
         case 'ArrowLeft':
-          press('left');
+          press('left', e.ctrlKey);
           break;
         case 'ArrowRight':
-          press('right');
+          press('right', e.ctrlKey);
           break;
         default:
-          press(e.key)
+          press(e.key, e.ctrlKey)
           break
       }
     });

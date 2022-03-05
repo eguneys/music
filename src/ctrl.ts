@@ -115,6 +115,7 @@ function how_many_quantis(start: BeatMeasure, end: BeatMeasure) {
 }
 
 const metronome_key = 'metronome_key'
+const auto_key = 'auto_key'
 
 const duration_codes = ['double', 'whole', 'half', 'quarter', 'quarter', 'quarter', 'quarter', 'quarter']
 function note_duration_code(duration: Duration) {
@@ -188,6 +189,20 @@ export class BeatDivido {
 
   }
 
+  bmnr_at_bm(bm: BeatMeasure) {
+    let start_quanti = bm as BeatQuanti,
+      end_quanti = bm + 1 as BeatQuanti
+
+    let [start_i, end_i, off_start, off_end] = this.scan_data(start_quanti, end_quanti)
+
+    if (start_i !== undefined && end_i !== undefined) {
+      if (off_start === 0) {
+
+
+        return this.bmnrs[start_i]
+      }
+    }
+  }
 
   scan_data(start_quanti: BeatQuanti, end_quanti: BeatQuanti): [number | undefined, number | undefined,  number, number] {
 
@@ -274,7 +289,6 @@ export class BeatDivido {
                                    this.quanti_note_value(this.sub_quanties_for_note_values[i])
                                   )))
 
-      //let i_bmnr = make_bmnr(nb_quanti, po?make_note(po[0], po[1], note_duration):note_duration)
       let removed = this.bmnrs.splice(start_i, end_i - start_i + 1, ...b_notes, ...i_notes, ...e_notes)
       
       return true
@@ -315,8 +329,155 @@ export class BeatDivido {
 
 }
 
-export class Playback extends IPlay {
+export class PlayWithDivido extends IPlay {
 
+  get schedule_next_time(): number {
+    return this.instrument.currentTime
+  }
+
+  get divido(): BeatDivido { return this.data as BeatDivido }
+
+  get time_signature(): TimeSignature {
+    return this.divido.time_signature
+  }
+
+  voices!: Array<Voice>
+  instrument!: PlayerController
+  playback!: Playback
+
+  _init() {
+    this.instrument = new PlayerController()
+
+    this.voices = []
+    this.playback = new Playback(this.ctx)._set_data(this.time_signature).init()
+  }
+
+
+  _update(dt: number, dt0: number) {
+    this.playback.update(dt, dt0)
+
+    if (this.playback.on_reset) {
+
+      this.voices.forEach(_ => _.instrument_id && this.instrument.release(_.instrument_id, this.schedule_next_time))
+      this.voices = []
+    }
+
+
+    if (this.playback.bm !== this.playback.bm0) {
+      let bmnr = this.divido.bmnr_at_bm(this.playback.bm)
+      if (bmnr) {
+        let nr = bmnr_nr(bmnr)
+        if (is_note(nr)) {
+          let voice: Voice = { key: auto_key, 
+            start: this.playback.bm, 
+            end: this.playback.bm + bmnr_bm(bmnr)}
+          voice.instrument_id = this.instrument
+          .attack(nr, this.schedule_next_time)
+          this.instrument.release(voice.instrument_id, this.schedule_next_time + bmnr_bm(bmnr) * this.playback.quanti_duration / 1000)
+        }
+      }
+    }
+
+
+    this._schedule_redraw ||= this.playback._schedule_redraw
+  }
+}
+
+export class PlayWithKeyboard extends IPlay {
+
+  get schedule_next_time(): number {
+    return this.instrument.currentTime
+  }
+
+  get time_signature(): TimeSignature {
+    return this.data as TimeSignature
+  }
+
+
+  voices!: Array<Voice>
+  divido!: BeatDivido
+  instrument!: PlayerController
+
+  playback!: Playback
+
+
+  _init() {
+    this.instrument = new PlayerController()
+
+    this.voices = []
+
+    this.divido = new BeatDivido(this.time_signature)
+    this.divido.add_measure()
+
+    this.playback = new Playback(this.ctx)._set_data(this.time_signature).init()
+  }
+
+
+
+  _update(dt: number, dt0: number) {
+
+
+    this.playback.update(dt, dt0)
+
+    if (this.playback.on_reset) {
+      // TODO leak
+      if (this.playback.repeat) {
+        this.divido.rest_interval(...this.playback.repeat)
+      }
+      this.voices.forEach(_ => _.instrument_id && this.instrument.release(_.instrument_id, this.schedule_next_time))
+      this.voices = []
+    }
+
+
+    if (this.playback.on_repeat) {
+      // TODO off by one
+      this.voices.forEach(_ => _.end = this.playback.bm0! + 1)
+    }
+
+
+   btn_pitches_all.forEach((key, i) => {
+      let x = this.input.btn(key),
+        x0 = this.input.btn0(key)
+
+      if (x > 0) {
+        if (x0 === 0) {
+          let voice: Voice = { key, start: this.playback.bm }
+          let po = voice_pitch_octave(voice)
+          if (po) {
+            voice.instrument_id = this.instrument.attack(make_note(po[0], po[1], 1), this.schedule_next_time)
+          }
+          this.voices.push(voice)
+        }
+      } else if (x === 0) {
+        if (x0 > 0) {
+          let voice = this.voices.find(_ => _.key === key)
+          if (voice && !voice.end) {
+            voice.end = this.playback.bm
+          }
+        }
+      }
+    })
+
+
+
+
+    this.voices = this.voices.filter(_ => {
+      if (_.end !== undefined) {
+        if (_.instrument_id) {
+          this.instrument.release(_.instrument_id, this.schedule_next_time)
+        }
+        this.divido.add_note(_.start, _.end - _.start as BeatQuanti, voice_pitch_octave(_))
+        this.redraw()
+        return false
+      }
+      return true
+    })
+
+    this._schedule_redraw ||= this.playback._schedule_redraw
+  }
+}
+
+export class Playback extends IPlay {
 
   get bpm() {
     return tempos[this.tempo - 1]
@@ -349,14 +510,18 @@ export class Playback extends IPlay {
     return bm_quanti(this.bm)
   }
 
-  get schedule_next_time(): number {
-    return this.instrument.currentTime
-  }
-
   get countdown_ni(): number | undefined {
     if (this.countdown_bm) {
       return Math.ceil((this.countdown_bm / 8)) / 3
     }
+  }
+
+  get on_reset(): boolean {
+    return this.reset_take !== this.reset_take0
+  }
+
+  get on_repeat(): boolean {
+    return this.repeat_take !== this.repeat_take0
   }
 
   measure0?: Measure
@@ -373,18 +538,16 @@ export class Playback extends IPlay {
 
   playing!: boolean
   repeat_take!: number
+  reset_take!: number
+
+  bm0?: number
+  repeat_take0?: number
+  reset_take0?: number
 
   tempo!: Tempo
 
-  voices!: Array<Voice>
-  divido!: BeatDivido
-
-  instrument!: PlayerController
-
   _init() {
-    this.instrument = new PlayerController()
     this.bm = 0
-    this.voices = []
     this.playing = false
     this.repeat_take = 1
     this.countdown = make_bm(0, 3, 0, this.beats_per_measure)
@@ -394,16 +557,20 @@ export class Playback extends IPlay {
 
     this.repeat = [0, make_bm(0, 2, 0, this.beats_per_measure)]
 
-    this.divido = new BeatDivido(this.time_signature)
-    this.divido.add_measure()
+    this.reset_take = 0
   }
 
   _update(dt: number, dt0: number) {
+    this.bm0 = this.bm
+    this.repeat_take0 = this.repeat_take
+    this.reset_take0 = this.reset_take
+
+
     this.t_quanti += dt
 
     if (this.input.btnp(btn_reset)) {
       if (this.repeat) {
-        this.divido.rest_interval(...this.repeat)
+        this.reset_take++
 
         this.countdown_bm = 0
         this.t_quanti = 0
@@ -411,9 +578,6 @@ export class Playback extends IPlay {
         this.playing = false
 
         this.bm = this.repeat[0]
-        this.voices.forEach(_ => _.instrument_id && this.instrument.release(_.instrument_id, this.schedule_next_time))
-        this.voices = []
-
         this.redraw()
       }
     }
@@ -440,7 +604,6 @@ export class Playback extends IPlay {
       if (this.repeat) {
         if (this.bm >= this.repeat[1]) {
           this.repeat_take++
-          this.voices.forEach(_ => _.end = this.bm)
           this.bm = this.repeat[0]
         }
       }
@@ -450,43 +613,6 @@ export class Playback extends IPlay {
       //metronome
       //this.voices.push({ key: metronome_key, start: this.bm, end: this.bm + 1 })
     }
-
-   btn_pitches_all.forEach((key, i) => {
-      let x = this.input.btn(key),
-        x0 = this.input.btn0(key)
-
-      if (x > 0) {
-        if (x0 === 0) {
-          let voice: Voice = { key, start: this.bm }
-          let po = voice_pitch_octave(voice)
-          if (po) {
-            voice.instrument_id = this.instrument.attack(make_note(po[0], po[1], 1), this.schedule_next_time)
-          }
-          this.voices.push(voice)
-        }
-      } else if (x === 0) {
-        if (x0 > 0) {
-          let voice = this.voices.find(_ => _.key === key)
-          if (voice) {
-            voice.end = this.bm
-          }
-        }
-      }
-    })
-
-    this.voices = this.voices.filter(_ => {
-      if (_.end !== undefined) {
-        if (_.instrument_id) {
-          this.instrument.release(_.instrument_id, this.schedule_next_time)
-        }
-        this.divido.add_note(_.start, _.end - _.start as BeatQuanti, voice_pitch_octave(_))
-        this.redraw()
-        return false
-      }
-      return true
-    })
-
-
     if (this.input.btnp('+')) {
       let new_tempo = this.tempo + 1
 
@@ -504,13 +630,27 @@ export class Playback extends IPlay {
 
     this.beat0 = this.current_beat
     this.measure0 = this.current_measure
-
   }
 }
 export default class Ctrl extends IPlay {
 
   // properties
-  playback!: Playback
+  play_with_keyboard!: PlayWithKeyboard
+  play_with_divido!: PlayWithDivido
+
+  control!: any
+
+  get divido(): BeatDivido {
+    return this.control.divido
+  }
+
+  get playback(): Playback {
+    return this.control.playback
+  }
+
+  get voices(): Array<Voice> {
+    return this.play_with_keyboard.voices
+  }
 
   get frees(): Array<FreeOnStaff> {
     let res = []
@@ -525,7 +665,7 @@ export default class Ctrl extends IPlay {
 
     let ox = 2
 
-    this.playback.divido.bmnrs.forEach(bmnr => {
+    this.divido.bmnrs.forEach(bmnr => {
 
       let bm = bmnr_bm(bmnr),
         nr = bmnr_nr(bmnr)
@@ -543,7 +683,7 @@ export default class Ctrl extends IPlay {
     })
 
 
-    let voice = this.playback.voices[0]
+    let voice = this.voices[0]
 
     if (voice) {
       let po = voice_pitch_octave(voice)
@@ -555,10 +695,10 @@ export default class Ctrl extends IPlay {
           return res
         }
 
-        let [quantized_left, quantized_subs] = this.playback.divido.quanti_in_subs(nb_quanti)
+        let [quantized_left, quantized_subs] = this.divido.quanti_in_subs(nb_quanti)
 
         nb_quanti = nb_quanti - quantized_left as BeatQuanti
-        let note_duration = this.playback.divido.quanti_note_value(nb_quanti)
+        let note_duration = this.divido.quanti_note_value(nb_quanti)
 
         let nr = make_note(po[0], po[1], note_duration)
         res.push(...free_note_parts(nr, 2 + (voice.start / 8) * 2, 'voice'))
@@ -571,13 +711,23 @@ export default class Ctrl extends IPlay {
 
   _init() {
     let time = make_time_signature(4, 4)
-    this.playback = new Playback(this.ctx)._set_data(time).init()
+    this.play_with_keyboard = new PlayWithKeyboard(this.ctx)._set_data(time).init()
+    this.play_with_divido = new PlayWithDivido(this.ctx)._set_data(this.play_with_keyboard.divido).init()
+    
+    this.control = this.play_with_keyboard
   }
 
   _update(dt: number, dt0: number) {
   
-    this.playback.update(dt, dt0)
+    if (this.input.btnp('Tab')) {
+    this.control = this.control === this.play_with_divido ? this.play_with_keyboard : this.play_with_divido
+  }
 
-    this._schedule_redraw = this.playback._schedule_redraw
+
+
+
+    this.control.update(dt, dt0)
+
+    this._schedule_redraw = this.control._schedule_redraw
   }
 }
