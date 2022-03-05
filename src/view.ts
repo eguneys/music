@@ -7,8 +7,10 @@ import { FreeOnStaff } from './types'
 
 export default function view(ctrl: Ctrl) {
   return h('div.m-wrap', [
-    h('staff', { 
-      class: { playing: ctrl.playback.playing }
+    h('staff.take_' + ctrl.playback.repeat_take, { 
+      class: { 
+        playing: ctrl.playback.playing
+      }
     }, [
       ...playback(ctrl, ctrl.playback),
       h('lines', [

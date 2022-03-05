@@ -1,7 +1,7 @@
 import { ticks } from './shared'
 
 let RE = /^[A-Za-z0-9\+\-;'\\]$/
-let RE2 = /^(\s|Left|Right|Backspace)$/
+let RE2 = /^(\s|Left|Right|Backspace|Enter)$/
 function capture_key(key: string) {
   return key.match(RE) || key.match(RE2)
 }

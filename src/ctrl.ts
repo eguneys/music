@@ -3,7 +3,7 @@ import * as util from './util'
 import { Clef, Pitch, Octave, Duration, Tempo, TimeSignature } from './music'
 import { make_note, make_time_signature, is_tempo, is_note, is_rest } from './music'
 import { Note, note_pitch, note_octave, note_duration } from './music'
-import { time_nb_note_value, time_note_value } from './music'
+import { NoteValue, NbNoteValuePerMeasure, time_nb_note_value, time_note_value } from './music'
 
 import { Beat, Measure, BeatQuanti, BeatMeasure } from './music'
 import { bm_beat, bm_quanti, bm_measure, make_bm } from './music'
@@ -63,6 +63,8 @@ let btn_rest = 'Backspace'
 
 let btn_pitches_all = [...btn_pitches, ...btn_pitches_octave_up, btn_rest]
 
+let btn_reset = 'Enter'
+
 
 // TODO GC
 function voice_pitch_octave(voice: Voice): [Pitch, Octave] | undefined {
@@ -112,6 +114,16 @@ function note_duration_flag(duration: Duration) {
   return duration_flag_codes[duration - 1]
 }
 
+const nb_note_value_codes = [,,'two','three','four','five','six','seven','eight','nine','ten','eleven','twelve']
+function nb_note_value_code(nb_note_value: NbNoteValuePerMeasure) {
+  return nb_note_value_codes[nb_note_value]
+}
+
+const note_value_codes = [,, 'two', 'four', 'eight', 'sixteen']
+function note_value_code(note_value: NoteValue) {
+  return note_value_codes[note_value]
+}
+
 export class BeatDivido {
 
   bmnrs: Array<BeatMeasureNoteRest> = []
@@ -159,29 +171,15 @@ export class BeatDivido {
 
   }
 
-  add_note(bm: BeatMeasure, nb_quanti: BeatQuanti, po?: [Pitch, Octave]) {
-    let measure = bm_measure(bm, this.nb_beats),
-      beat = bm_beat(bm, this.nb_beats),
-      quanti = bm_quanti(bm)
 
-    if (nb_quanti === 0) {
-      return
-    }
-
-    let [quantized_left, quantized_subs] = this.quanti_in_subs(nb_quanti)
-
-    nb_quanti = nb_quanti - quantized_left as BeatQuanti
-    let note_duration = this.quanti_note_value(nb_quanti)
-
-    let start_quanti = beat * 8 + quanti,
-      end_quanti = start_quanti + nb_quanti
+  scan_data(start_quanti: BeatQuanti, end_quanti: BeatQuanti): [number | undefined, number | undefined,  number, number] {
 
     let start_i,
       end_i
     let i_quanti = 0
 
-    let off_start = 0,
-    off_end = 0
+    let off_start = 0, 
+      off_end = 0
 
     for (let i = 0; i < this.bmnrs.length; i++) {
 
@@ -205,6 +203,30 @@ export class BeatDivido {
 
       i_quanti += _bm
     }
+
+    return [start_i, end_i, off_start, off_end]
+  }
+
+
+  add_note(bm: BeatMeasure, nb_quanti: BeatQuanti, po?: [Pitch, Octave]) {
+    let measure = bm_measure(bm, this.nb_beats),
+      beat = bm_beat(bm, this.nb_beats),
+      quanti = bm_quanti(bm)
+
+    if (nb_quanti === 0) {
+      return
+    }
+
+    let [quantized_left, quantized_subs] = this.quanti_in_subs(nb_quanti)
+
+    nb_quanti = nb_quanti - quantized_left as BeatQuanti
+    let note_duration = this.quanti_note_value(nb_quanti)
+
+    let start_quanti = beat * 8 + quanti as BeatQuanti,
+      end_quanti = start_quanti + nb_quanti as BeatQuanti
+
+
+    let [start_i, end_i, off_start, off_end] = this.scan_data(start_quanti, end_quanti)
 
     if (start_i !== undefined && end_i !== undefined) {
       let [left, subs] = this.quanti_in_subs(off_start as BeatQuanti)
@@ -232,6 +254,31 @@ export class BeatDivido {
     }
 
     return false
+  }
+
+  rest_interval(start: BeatMeasure, end: BeatMeasure) {
+
+    let start_quanti = start as BeatQuanti,
+      end_quanti = end as BeatQuanti
+
+
+    let [start_i, end_i, off_start, off_end] = this.scan_data(start_quanti, end_quanti)
+
+    if (start_i !== undefined && end_i !== undefined) {
+      let [left, subs] = this.quanti_in_subs(end_quanti - start_quanti as BeatQuanti)
+
+      let b_rests = subs
+      .flatMap((_, i) => [...Array(_)]
+               .map(() =>
+                    make_bmnr(
+                      this.sub_quanties_for_note_values[i],
+                      this.quanti_note_value(this.sub_quanties_for_note_values[i])))
+              )
+
+       this.bmnrs.splice(start_i, end_i - start_i + 1, ...b_rests)
+    }
+
+
   }
 
   add_measure() {
@@ -280,13 +327,14 @@ export class Playback extends IPlay {
 
   t_quanti: number = 0
 
-  playing: boolean = false
-
 
   bm!: BeatMeasure
   repeat?: [BeatMeasure, BeatMeasure]
 
-  tempo: Tempo = 2
+  playing!: boolean
+  repeat_take!: number
+
+  tempo!: Tempo
 
   voices!: Array<Voice>
   divido!: BeatDivido
@@ -298,8 +346,11 @@ export class Playback extends IPlay {
     this.bm = 0
     this.voices = []
     this.playing = true
+    this.repeat_take = 1
 
-    this.repeat = [0, make_bm(1, 0, 0, this.beats_per_measure)]
+    this.tempo = 2
+
+    this.repeat = [0, make_bm(0, 2, 0, this.beats_per_measure)]
 
     this.divido = new BeatDivido(this.time_signature)
     this.divido.add_measure()
@@ -309,12 +360,27 @@ export class Playback extends IPlay {
     this.t_quanti += dt
 
 
+    if (this.input.btnp(btn_reset)) {
+      if (this.repeat) {
+        this.divido.rest_interval(...this.repeat)
+
+        this.repeat_take++
+          this.bm = this.repeat[0]
+        this.voices.forEach(_ => _.instrument_id && this.instrument.release(_.instrument_id, this.schedule_next_time))
+        this.voices = []
+
+        this.redraw()
+      }
+    }
+
     if (this.t_quanti >= this.quanti_duration) {
       this.t_quanti = 0
       this.bm++;
 
+
       if (this.repeat) {
         if (this.bm >= this.repeat[1]) {
+          this.repeat_take++
           this.bm = this.repeat[0]
           this.voices.forEach(_ => _.instrument_id && this.instrument.release(_.instrument_id, this.schedule_next_time))
           this.voices = []
@@ -362,20 +428,19 @@ export class Playback extends IPlay {
       return true
     })
 
-    if (this.tempo) {
-      if (this.input.btnp('+')) {
-        let new_tempo = this.tempo + 1
 
-        if (is_tempo(new_tempo)) {
-          this.tempo = new_tempo
-          this.redraw()
-        }
-      } else if (this.input.btnp('-')) {
-        let new_tempo = this.tempo - 1
-        if (is_tempo(new_tempo)) {
-          this.tempo = new_tempo
-          this.redraw()
-        }
+    if (this.input.btnp('+')) {
+      let new_tempo = this.tempo + 1
+
+      if (is_tempo(new_tempo)) {
+        this.tempo = new_tempo
+        this.redraw()
+      }
+    } else if (this.input.btnp('-')) {
+      let new_tempo = this.tempo - 1
+      if (is_tempo(new_tempo)) {
+        this.tempo = new_tempo
+        this.redraw()
       }
     }
 
@@ -392,9 +457,13 @@ export default class Ctrl extends IPlay {
   get frees(): Array<FreeOnStaff> {
     let res = []
 
+
+    let nb_note_value = time_nb_note_value(this.playback.time_signature),
+      note_value = time_note_value(this.playback.time_signature)
+
     res.push({ code: 'gclef', klass: '', pitch: 5 as Pitch, octave: 4 as Octave, ox: 0.2, oy: 0 })
-    res.push({ code: 'two_time', klass: '', pitch: 5 as Pitch, octave: 4 as Octave, ox: 1, oy: 0 })
-    res.push({ code: 'four_time', klass: '', pitch: 2 as Pitch, octave: 5 as Octave, ox: 1, oy: 0 })
+    res.push({ code: nb_note_value_codes[nb_note_value] + '_time', klass: '', pitch: 2 as Pitch, octave: 5 as Octave, ox: 1, oy: 0 })
+    res.push({ code: note_value_codes[note_value] + '_time', klass: '', pitch: 5 as Pitch, octave: 4 as Octave, ox: 1, oy: 0 })
 
     let ox = 2
 
@@ -432,7 +501,7 @@ export default class Ctrl extends IPlay {
 
 
   _init() {
-    let time = make_time_signature(4, 2)
+    let time = make_time_signature(4, 3)
     this.playback = new Playback(this.ctx)._set_data(time).init()
   }
 
