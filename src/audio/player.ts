@@ -22,7 +22,6 @@ function note_freq(note: Note) {
   return 440 * Math.pow(2, (n - 57) / 12)
 }
 
-
 function ads(param: AudioParam, now: number, { a,d,s,r }: Adsr, start: number, max: number, min: number) {
   param.setValueAtTime(start, now)
   param.linearRampToValueAtTime(max, now + a)
@@ -117,10 +116,11 @@ export class MidiPlayer extends HasAudioAnalyser {
   data!: MidiNote
 
   osc1!: OscillatorNode
+  osc2!: OscillatorNode
   envelope!: GainNode
 
   get envelope_adsr() {
-    return { a: 0.02, d: 0.3, s: 0.48,  r: 0.1 }
+    return { a: 0.02, d: 0.1, s: 0.48,  r: 0.1 }
   }
 
   _set_data(data: MidiNote) {
@@ -138,22 +138,42 @@ export class MidiPlayer extends HasAudioAnalyser {
     let osc1 = new OscillatorNode(context, { type: 'sawtooth' })
     this.osc1 = osc1
 
+    let osc2 = new OscillatorNode(context, { type: 'sawtooth' })
+    this.osc2 = osc2
+
+
+    let osc1_mix = new GainNode(context)
+    osc1.connect(osc1_mix)
+    let osc2_mix = new GainNode(context)
+    osc2.connect(osc2_mix)
+
+    osc1_mix.gain.setValueAtTime(0.7, now)
+    osc2_mix.gain.setValueAtTime(0.3, now)
+
+    osc2.detune.setValueAtTime(1200 + 700, now)
+
     let filter = new BiquadFilterNode(context, { type: 'lowpass' })
-    osc1.connect(filter)
+    osc1_mix.connect(filter)
+    osc2_mix.connect(filter)
+
 
     let envelope = new GainNode(context)
     this.envelope = envelope
     filter.connect(envelope)
     envelope.connect(out_gain)
 
-    let cutoff = 10000
+
+
+    let cutoff = 4500
     osc1.frequency.setValueAtTime(freq, now)
+
+    osc2.frequency.setValueAtTime(freq, now)
 
     ads(filter.frequency,
          now,
-         { a: 0, d: 0.3, s: 0 },
+         { a: 0.02, d: 0.2, s: 0 },
          cutoff,
-         cutoff * 1.5,
+         cutoff * 3,
          cutoff)
 
 
@@ -165,6 +185,7 @@ export class MidiPlayer extends HasAudioAnalyser {
          1)
 
          osc1.start(now)
+         osc2.start(now)
   }
 
 
@@ -175,5 +196,6 @@ export class MidiPlayer extends HasAudioAnalyser {
 
     r(this.envelope.gain, now, this.envelope_adsr, 0)
     this.osc1.stop(now + 0.2)
+    this.osc2.stop(now + 0.2)
   }
 }
