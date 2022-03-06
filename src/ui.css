@@ -1,0 +1,35 @@
+.measure-controls {
+  position: absolute;
+  bottom: 0;
+}
+
+.measure-controls span {
+  font-size: 0.25em;
+  line-height: 1em;
+}
+
+
+staff .repeat {
+  position: absolute;
+  top: 3.75em;
+  width: 0.03em;
+  height: 0.5em;
+  background: orange;
+  z-index: 1;
+}
+
+staff .repeat::before {
+  content: '';
+  position: absolute;
+  width: 400%;
+  height: 100%;
+  cursor: w-resize;
+  transform: translate(-50%, 0);
+}
+
+staff .repeat-fill {
+  position: absolute;
+  top: 3.75em;
+  height: 0.5em;
+  background: rgba(255, 165, 0, 0.2);
+}

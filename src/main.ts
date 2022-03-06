@@ -8,6 +8,7 @@ import Ctrl from './ctrl'
 import view from './view'
 
 import Input from './input'
+import Mouse from './mouse'
 
 import { Config, configure } from './config'
 
@@ -18,14 +19,17 @@ export default function app(_config: Partial<Config>, element: HTMLElement) {
   let config = configure(_config)
 
   let input = new Input()
+  let mouse = new Mouse()
 
 
   if (config.capture) {
     input.init()
+    mouse.init()
   }
 
   let ctx = {
-    input
+    input,
+    mouse
   }
 
   let ctrl = new Ctrl(ctx)._set_data(config).init()
@@ -53,6 +57,7 @@ export default function app(_config: Partial<Config>, element: HTMLElement) {
     dt = Math.min(max_dt, dt)
 
     input.update(dt, dt0)
+    mouse.update(dt, dt0)
     ctrl.update(dt, dt0)
 
     if (ctrl._schedule_redraw) {

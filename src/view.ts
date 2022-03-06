@@ -9,7 +9,13 @@ import { FreeOnStaff } from './types'
 import { BeatMeasure, bm_measure, bm_beat } from './music'
 
 export default function view(ctrl: Ctrl) {
-  return h('div.m-wrap', [
+  return h('div.m-wrap', {
+    hook: {
+      insert(vnode: VNode) {
+        ctrl.bindWrap(vnode.elm as HTMLElement)
+      }
+    }
+  }, [
     h('staff.take_' + ctrl.playback.repeat_take, { 
       class: { 
         countdown: ctrl.playback.countdown_bm !== undefined,
@@ -90,6 +96,10 @@ function repeat_fill(playback: Playback, repeat: [BeatMeasure, BeatMeasure]) {
   let ox1 = bm_measure(bm1, playback.beats_per_measure) * playback.beats_per_measure + bm_beat(bm1, playback.beats_per_measure)
   let ox2 = bm_measure(bm2, playback.beats_per_measure) * playback.beats_per_measure + bm_beat(bm2, playback.beats_per_measure)
 
+
+  ox1 *= 2
+  ox2 *= 2
+
   return h('div.repeat-fill', {
     style: {
       transform: `translate(calc(2em + ${ox1}em), -50%)`,
@@ -102,6 +112,8 @@ function repeat_fill(playback: Playback, repeat: [BeatMeasure, BeatMeasure]) {
 function repeat(playback: Playback, bm: BeatMeasure) {
 
   let ox = bm_measure(bm, playback.beats_per_measure) * playback.beats_per_measure + bm_beat(bm, playback.beats_per_measure)
+
+  ox *= 2
 
   return h('div.repeat', {
     attrs: {

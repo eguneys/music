@@ -1,16 +1,17 @@
 import { ticks } from './shared'
-import * as util from './util'
+import { memo, Memo } from './util'
 import { Clef, Pitch, Octave, Duration, Tempo, TimeSignature } from './music'
 import { make_note, make_time_signature, is_tempo, is_note, is_rest } from './music'
 import { Note, note_pitch, note_octave, note_duration } from './music'
 import { NoteValue, NbNoteValuePerMeasure, time_nb_note_value, time_note_value } from './music'
 
 import { Beat, Measure, BeatQuanti, BeatMeasure } from './music'
-import { bm_beat, bm_quanti, bm_measure, make_bm } from './music'
+import { bm_beats, bm_beat, bm_quanti, bm_measure, make_bm } from './music'
 import { BeatMeasureNoteRest, make_bmnr, bmnr_bm, bmnr_nr } from './music'
 
 import { Config } from './config'
 import Input from './input'
+import Mouse, { eventPosition, MouchEvent } from './mouse'
 
 import { FreeOnStaff, Direction } from './types'
 
@@ -19,7 +20,8 @@ import { PlayerController } from './audio/player'
 export type Redraw = () => void
 
 type Context = {
-  input: Input
+  input: Input,
+  mouse: Mouse
 }
 
 abstract class IPlay {
@@ -28,6 +30,7 @@ abstract class IPlay {
 
   data: any
 
+  get mouse() { return this.ctx.mouse }
   get input() { return this.ctx.input }
   constructor(readonly ctx: Context) {}
 
@@ -653,10 +656,26 @@ export class Playback extends IPlay {
 export default class Ctrl extends IPlay {
 
   // properties
+
+
+  _em!: Memo<number>
+
+  get em(): number {
+    return this._em?.() || 0
+  }
+
+  _bounds!: Memo<ClientRect>
+  get bounds(): ClientRect {
+    return this._bounds?.() || {}
+  }
+
   play_with_keyboard!: PlayWithKeyboard
   play_with_divido!: PlayWithDivido
 
   control!: any
+
+
+  current_drag_repeat?: number
 
   get divido(): BeatDivido {
     return this.control.divido
@@ -727,6 +746,47 @@ export default class Ctrl extends IPlay {
     return res
   }
 
+  on_start(e: MouchEvent) {
+    let pos = eventPosition(e)
+    if (pos) {
+      let [x, y] = pos
+
+      if (y > this.bounds.y + this.bounds.height - this.em * 0.5) {
+
+        let { repeat, beats_per_measure } = this.control.playback
+
+        if (repeat) {
+          let bm1 = bm_beats(repeat[0], beats_per_measure),
+            bm2 = bm_beats(repeat[1], beats_per_measure)
+
+          let x1 = this.em * (bm1 * 2 + 2),
+            x2 = this.em * (bm2 * 2 + 2),
+            lee = this.em * 0.2
+          console.log(x, x2)
+
+          if (x1 - lee < x && x < x1 + lee) {
+            this.current_drag_repeat = 0
+          } else if (x2 - lee < x && x < x2 + lee) {
+            this.current_drag_repeat = 1
+          }
+        }
+
+      }
+
+    }
+  }
+
+  bindWrap(elm: HTMLElement) {
+
+
+    this._bounds = memo(() => elm.getBoundingClientRect())
+    this._em = memo(() => parseFloat(getComputedStyle(elm).fontSize))
+
+
+    const onStart = (e: MouchEvent) => this.on_start(e)
+    elm.addEventListener('touchstart', onStart, { passive: false })
+    elm.addEventListener('mousedown', onStart, { passive: false })
+  }
 
   _init() {
     let time = make_time_signature(4, 4)
@@ -737,17 +797,47 @@ export default class Ctrl extends IPlay {
   }
 
   _update(dt: number, dt0: number) {
-  
+
     if (this.input.btnp('Tab')) {
-    this.control = this.control === this.play_with_divido ? this.play_with_keyboard : this.play_with_divido
-  }
+      this.control = this.control === this.play_with_divido ? this.play_with_keyboard : this.play_with_divido
+    }
 
-  if (this.input.btnp(btn_play)) {
-    this.control.playback.set_play()
-  }
+    if (this.input.btnp(btn_play)) {
+      this.control.playback.set_play()
+    }
 
+    if (this.mouse.click_end) {
+      this.current_drag_repeat = undefined
+    }
 
+    if (this.current_drag_repeat !== undefined) {
+      let { repeat } = this.control.playback
+      
+      if (repeat) {
+        let bm = Math.max(0, (this.mouse.x / this.em) - 2)
 
+        let beat = Math.round(bm / 2) as Beat
+
+        let _r0 = repeat[this.current_drag_repeat]
+
+        repeat[this.current_drag_repeat] = make_bm(0, beat, 0, 
+                                                   this.control.playback.beats_per_measure)
+
+        if (repeat[0] === repeat[1]) {
+          repeat[this.current_drag_repeat] = _r0
+        } else if (repeat[0] > repeat[1]) {
+
+          _r0 = repeat[0]
+          repeat[0] = repeat[1]
+          repeat[1] = _r0
+
+          this.current_drag_repeat++;
+          this.current_drag_repeat %= 2
+        }
+        this.redraw()
+      }
+
+    }
 
     this.control.update(dt, dt0)
 

@@ -21,6 +21,9 @@ export function bm_quanti(bm: BeatMeasure): BeatQuanti {
   return bm % 8 as BeatQuanti
 }
 
+export function bm_beats(bm: BeatMeasure, nb_beats: number): number {
+  return bm_beat(bm, nb_beats) + bm_measure(bm, nb_beats) * nb_beats
+}
 
 export type NoteRest = Note | Rest
 
