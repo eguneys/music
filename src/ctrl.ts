@@ -81,6 +81,7 @@ let btn_rest = 'Backspace'
 let btn_pitches_all = [...btn_pitches, ...btn_pitches_octave_up, btn_rest]
 
 let btn_reset = 'Enter'
+let btn_play = '*'
 
 
 // TODO GC
@@ -546,6 +547,9 @@ export class Playback extends IPlay {
 
   tempo!: Tempo
 
+
+  _playback_control_isplaying!: boolean
+
   _init() {
     this.bm = 0
     this.playing = false
@@ -558,6 +562,18 @@ export class Playback extends IPlay {
     this.repeat = [0, make_bm(2, 0, 0, this.beats_per_measure)]
 
     this.reset_take = 0
+
+    this._playback_control_isplaying = false
+  }
+
+  set_play(v: boolean) {
+    this._playback_control_isplaying = v || !this._playback_control_isplaying
+
+    this.t_quanti = 0
+    this.countdown_bm = 0
+    this.bm = this.repeat?.[0] || 0
+    this.playing = false
+    this.redraw()
   }
 
   _update(dt: number, dt0: number) {
@@ -566,7 +582,9 @@ export class Playback extends IPlay {
     this.reset_take0 = this.reset_take
 
 
-    this.t_quanti += dt
+    if (this._playback_control_isplaying) {
+      this.t_quanti += dt
+    }
 
     if (this.input.btnp(btn_reset)) {
       if (this.repeat) {
@@ -574,7 +592,7 @@ export class Playback extends IPlay {
 
         this.countdown_bm = 0
         this.t_quanti = 0
-        this.repeat_take = 1;
+        this.repeat_take = 1
         this.playing = false
 
         this.bm = this.repeat[0]
@@ -652,6 +670,7 @@ export default class Ctrl extends IPlay {
     return this.play_with_keyboard.voices
   }
 
+
   get frees(): Array<FreeOnStaff> {
     let res = []
 
@@ -721,6 +740,10 @@ export default class Ctrl extends IPlay {
   
     if (this.input.btnp('Tab')) {
     this.control = this.control === this.play_with_divido ? this.play_with_keyboard : this.play_with_divido
+  }
+
+  if (this.input.btnp(btn_play)) {
+    this.control.playback.set_play()
   }
 
 

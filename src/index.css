@@ -11,8 +11,6 @@ staff {
   width: 100%;
   position: relative;
   background: white;
-  font-size: 1em;
-  line-height: 4em;
 }
 
 staff lines {
@@ -36,7 +34,8 @@ lines line:last-child {
 
 staff > span {
   position: absolute;
-  transform: translate(1.25em, -0.25em)
+  font-size: 1em;
+  line-height: 4em;
 }
 
 staff span.metronome {
@@ -48,7 +47,8 @@ staff span.voice {
   opacity: 0.5;
 }
 
-staff span.tempo {
+staff div.tempo {
+  position: absolute;
   font-size: 0.5em;
   display: flex;
   gap: 0.25em;

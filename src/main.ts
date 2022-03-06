@@ -1,4 +1,5 @@
 import './index.css'
+import './ui.css'
 import { init, styleModule, classModule, attributesModule } from 'snabbdom'
 
 const patch = init([classModule, styleModule, attributesModule])

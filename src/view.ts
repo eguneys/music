@@ -6,6 +6,8 @@ import { Voice } from './ctrl'
 import { Tempo, Pitch, Octave } from './music'
 import { FreeOnStaff } from './types'
 
+import { BeatMeasure, bm_measure, bm_beat } from './music'
+
 export default function view(ctrl: Ctrl) {
   return h('div.m-wrap', [
     h('staff.take_' + ctrl.playback.repeat_take, { 
@@ -27,7 +29,7 @@ export default function view(ctrl: Ctrl) {
         free_on_staff(_),
         ...stem(_),
       ]),
-      barline(),
+      ...barlines(ctrl.playback.beats_per_measure),
     ])
   ])
 }
@@ -73,8 +75,42 @@ export function playback(ctrl: Ctrl, playback: Playback) {
     .map((voices, i) =>
          cursor_full(i + 1)),
     */
-    cursor(playback.current_measure * playback.beats_per_measure + playback.current_beat, playback.beat_duration / 1000, playback.countdown_ni)
+    cursor(playback.current_measure * playback.beats_per_measure + playback.current_beat, playback.beat_duration / 1000, playback.countdown_ni),
+    ...(playback.repeat?[
+      repeat(playback, playback.repeat[0]),
+      repeat(playback, playback.repeat[1]),
+      repeat_fill(playback, playback.repeat)
+    ]: [])
   ]
+}
+
+function repeat_fill(playback: Playback, repeat: [BeatMeasure, BeatMeasure]) {
+
+  let [bm1, bm2] = repeat
+  let ox1 = bm_measure(bm1, playback.beats_per_measure) * playback.beats_per_measure + bm_beat(bm1, playback.beats_per_measure)
+  let ox2 = bm_measure(bm2, playback.beats_per_measure) * playback.beats_per_measure + bm_beat(bm2, playback.beats_per_measure)
+
+  return h('div.repeat-fill', {
+    style: {
+      transform: `translate(calc(2em + ${ox1}em), -50%)`,
+      width: `${ox2-ox1}em`
+    }
+  })
+}
+
+
+function repeat(playback: Playback, bm: BeatMeasure) {
+
+  let ox = bm_measure(bm, playback.beats_per_measure) * playback.beats_per_measure + bm_beat(bm, playback.beats_per_measure)
+
+  return h('div.repeat', {
+    attrs: {
+      title: 'Repeat'
+    },
+    style: {
+      transform: `translate(calc(2em + ${ox}em), -50%)`
+    }
+  })
 }
 
 let beats = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
@@ -107,19 +143,25 @@ export function cursor(beat: number, duration: number, countdown_ni?: number) {
   })])
 }
 
-export function barline() {
-  return h('span.barline', {
+export function barlines(width: number) {
+
+  return [...Array(8).keys()]
+  .flatMap(i => [h('span.barline', {
     style: {
-      transform: `translate(12em, -50%)`
+      transform: `translate(calc(2em + ${width*(i+1)}em), -50%)`
     }
-  })
+  }), h('div.measure-controls', {
+    style: {
+      transform: `translate(calc(2em + ${width*(i)}em), -50%)`
+    }
+  }, [])])
 }
 
 export function tempo(ctrl: Ctrl, bpm: number) {
 
-  return h('span.tempo', {
+  return h('div.tempo', {
     style: {
-      transform: `translate(1em, -2.5em)`
+      transform: `translate(1em, -0.5em)`
     }
   }, [
     h('span', g['quarter_text']),
