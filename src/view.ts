@@ -35,9 +35,67 @@ export default function view(ctrl: Ctrl) {
         free_on_staff(_),
         ...stem(_),
       ]),
+      ...ties(),
       ...barlines(ctrl.playback.beats_per_measure),
     ])
   ])
+}
+
+function ties() {
+  return [
+    tie(1, 5, 0, 1),
+    tie(1, 5, 1, 3),
+    tie(1, 5, 3, 6),
+    tie(1, 5, 6, 10),
+    tie(1, 5, 10, 15),
+    tie(1, 5, 15, 21),
+    tie(1, 5, 21, 28),
+  ]
+}
+
+function tie(pitch: Pitch, octave: Octave, x1: number, x2: number) {
+
+  let y1 = pitch_y(pitch, octave) 
+
+  x1 += 2
+  x2 += 2
+
+  let w = x2 - x1,
+    hw = w/ 2
+
+  let scale_y = w > 3 ? 14/w * 0.2 : 1
+
+  return h('svg.tie', { 
+    style: {
+      transform: `translate(calc(${x1 - w*0.1}em), calc(${y1+0.25-w*0.12-(scale_y*3-2)*0.15}em)) scaleY(${scale_y})`
+    },
+    attrs: { width: `${w}em`, height: `${w}em`, viewBox: '0 0 100 100' } 
+  }, [
+    h('defs', [
+      h('mask', { attrs: {
+        id: 'm1'
+      }}, [h('circle', {
+        attrs: { cx: `${50}`, cy: `${50}`, r: `${200}`, fill: 'white' }
+      }),/*
+      h('rect', {
+        attrs: { x: 0, y: 0, width: `${hw}em`, height: `${hw}em`, fill: 'black' }
+      }),
+     */
+      h('circle', {
+        attrs: { cx: `50`, cy: `${66-2*w}`, r: `${60+1*w}`, fill: 'black' }
+      }), 
+      h('circle', {
+        attrs: { cx: `10`, cy: `50`, r: `40`, fill: 'black' }
+      }),
+      h('circle', {
+        attrs: { cx: `90`, cy: `50`, r: `40`, fill: 'black' }
+      }),
+      ])
+    ]),
+    h('circle', {
+      attrs: { cx: `50`, cy: `50`, r: `50`, fill: 'black', mask:"url(#m1)" }
+    })
+  ] )
 }
 
 const flag_code = ['eighth_flag', 'sixteenth_flag', 'thirtysecond_flag', 'sixtyfourth_flag']

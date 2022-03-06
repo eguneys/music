@@ -137,3 +137,9 @@ staff span.stem.voice {
   0% { width: 0; }
   100% { width: 100%; }
 }
+
+
+svg.tie {
+  position: absolute;
+  top: 2em;
+}
