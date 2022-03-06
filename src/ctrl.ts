@@ -360,10 +360,9 @@ export class PlayWithDivido extends IPlay {
 
       this.voices.forEach(_ => _.instrument_id && this.instrument.release(_.instrument_id, this.schedule_next_time))
       this.voices = []
-    }
-
-
-    if (this.playback.bm !== this.playback.bm0) {
+    } else if (this.playback.bm !== this.playback.bm0 ||
+        /* TODO superflous track begin check */
+        (this.playback.countdown_bm === undefined && this.playback.bm === 0 && this.playback.bm0 === 0 && this.playback.t_quanti === 0)) {
       let bmnr = this.divido.bmnr_at_bm(this.playback.bm)
       if (bmnr) {
         let nr = bmnr_nr(bmnr)
@@ -711,7 +710,7 @@ export default class Ctrl extends IPlay {
 
 
   _init() {
-    let time = make_time_signature(3, 4)
+    let time = make_time_signature(4, 4)
     this.play_with_keyboard = new PlayWithKeyboard(this.ctx)._set_data(time).init()
     this.play_with_divido = new PlayWithDivido(this.ctx)._set_data(this.play_with_keyboard.divido).init()
     
