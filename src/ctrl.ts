@@ -254,8 +254,8 @@ export class BeatDivido {
     nb_quanti = nb_quanti - quantized_left as BeatQuanti
     let note_duration = this.quanti_note_value(nb_quanti)
 
-    console.log(beat, quanti, this.sub_quanties_for_note_values, this.note_value, nb_quanti, quantized_subs, note_duration, quantized_left)
-    let start_quanti = beat * 8 + quanti as BeatQuanti,
+    //console.log(beat, quanti, this.sub_quanties_for_note_values, this.note_value, nb_quanti, quantized_subs, note_duration, quantized_left)
+    let start_quanti = (measure * this.nb_beats + beat) * 8 + quanti as BeatQuanti,
       end_quanti = start_quanti + nb_quanti as BeatQuanti
 
     let [start_i, end_i, off_start, off_end] = this.scan_data(start_quanti, end_quanti)
@@ -408,6 +408,7 @@ export class PlayWithKeyboard extends IPlay {
 
     this.divido = new BeatDivido(this.time_signature)
     this.divido.add_measure()
+    this.divido.add_measure()
 
     this.playback = new Playback(this.ctx)._set_data(this.time_signature).init()
   }
@@ -555,7 +556,7 @@ export class Playback extends IPlay {
 
     this.tempo = 2
 
-    this.repeat = [0, make_bm(0, 2, 0, this.beats_per_measure)]
+    this.repeat = [0, make_bm(2, 0, 0, this.beats_per_measure)]
 
     this.reset_take = 0
   }
@@ -710,7 +711,7 @@ export default class Ctrl extends IPlay {
 
 
   _init() {
-    let time = make_time_signature(4, 4)
+    let time = make_time_signature(3, 4)
     this.play_with_keyboard = new PlayWithKeyboard(this.ctx)._set_data(time).init()
     this.play_with_divido = new PlayWithDivido(this.ctx)._set_data(this.play_with_keyboard.divido).init()
     

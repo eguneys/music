@@ -73,7 +73,7 @@ export function playback(ctrl: Ctrl, playback: Playback) {
     .map((voices, i) =>
          cursor_full(i + 1)),
     */
-    cursor(playback.current_beat, playback.beat_duration / 1000, playback.countdown_ni)
+    cursor(playback.current_measure * playback.beats_per_measure + playback.current_beat, playback.beat_duration / 1000, playback.countdown_ni)
   ]
 }
 
