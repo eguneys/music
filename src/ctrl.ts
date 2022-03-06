@@ -796,6 +796,15 @@ export default class Ctrl extends IPlay {
     this.control = this.play_with_keyboard
   }
 
+
+  save() {
+    return JSON.stringify(this.divido.bmnrs)
+  }
+
+  restore(data: any) {
+    this.divido.bmnrs = JSON.parse(data)
+  }
+
   _update(dt: number, dt0: number) {
 
     if (this.input.btnp('Tab')) {

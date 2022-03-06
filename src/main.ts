@@ -72,6 +72,12 @@ export default function app(_config: Partial<Config>, element: HTMLElement) {
   requestAnimationFrame(step) 
 
   return {
+    save() {
+      return ctrl.save()
+    },
+    restore(data: string) {
+      return ctrl.restore(data)
+    }
   }
 }
 
