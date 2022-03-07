@@ -15,7 +15,6 @@ staff .repeat {
   width: 0.03em;
   height: 0.5em;
   background: orange;
-  z-index: 1;
 }
 
 staff .repeat::before {

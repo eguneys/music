@@ -65,7 +65,7 @@ function ties(ctrl: Ctrl, ties: Ties) {
  */
 
   return ties.ties.map(_tie => {
-    let [bmnr1, bmnr2] = _tie
+    let [bmnr1, bmnr2] = _tie.map(_ => ctrl.divido.bmnr_at_index(_))
 
     let nr = bmnr_nr(bmnr1)
     let pitch = note_pitch(nr),

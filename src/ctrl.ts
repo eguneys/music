@@ -179,7 +179,7 @@ export class BeatDivido {
 
   constructor(readonly time_signature: TimeSignature) {}
 
-  next_bmnr_with_same_pitch(index: number) {
+  next_bmnr_index_with_same_pitch(index: number) {
     let bmnr = this.bmnrs[index]
     let nr = bmnr_nr(bmnr)
     if (is_note(nr)) {
@@ -196,7 +196,7 @@ export class BeatDivido {
         if (is_note(_nr)) {
 
           if (pitch === note_pitch(_nr) && octave === note_octave(_nr)) {
-            return this.bmnr_at_index(i)
+            return i
           }
         }
 
@@ -231,7 +231,7 @@ export class BeatDivido {
 
   }
 
-  bmnr_at_bm(bm: BeatMeasure) {
+  bmnri_at_bm(bm: BeatMeasure) {
     let start_quanti = bm as BeatQuanti,
       end_quanti = bm + 1 as BeatQuanti
 
@@ -241,7 +241,7 @@ export class BeatDivido {
       if (off_start === 0) {
 
 
-        return this.bmnrs[start_i]
+        return start_i
       }
     }
   }
@@ -377,7 +377,13 @@ export class PlayWithDivido extends IPlay {
     return this.instrument.currentTime
   }
 
-  get divido(): BeatDivido { return this.data as BeatDivido }
+  get divido(): BeatDivido { 
+    return (this.data as DividoAndTies).divido 
+  }
+
+  get ties(): Ties {
+    return (this.data as DividoAndTies).ties
+  }
 
   get time_signature(): TimeSignature {
     return this.divido.time_signature
@@ -405,16 +411,32 @@ export class PlayWithDivido extends IPlay {
     } else if (this.playback.bm !== this.playback.bm0 ||
         /* TODO superflous track begin check */
         (this.playback.countdown_bm === undefined && this.playback.bm === 0 && this.playback.bm0 === 0 && this.playback.t_quanti === 0)) {
-      let bmnr = this.divido.bmnr_at_bm(this.playback.bm)
-      if (bmnr) {
+      let bmnr_i = this.divido.bmnri_at_bm(this.playback.bm)
+      if (bmnr_i) {
+        let bmnr = this.divido.bmnrs[bmnr_i]
         let nr = bmnr_nr(bmnr)
-        if (is_note(nr)) {
-          let voice: Voice = { key: auto_key, 
+        let tie_end = this.ties.ties.find(_ => _[1] === bmnr_i)
+        if (is_note(nr) && !tie_end) {
+
+          let duration = bmnr_bm(bmnr) 
+
+          let tied_note = this.ties.ties.find(_ => _[0] === bmnr_i)
+          if (tied_note) {
+            let tied_bmnr = this.divido.bmnrs[tied_note[1]]
+            duration += bmnr_bm(tied_bmnr)
+          }
+
+          let voice: Voice = { 
+            key: auto_key, 
             start: this.playback.bm, 
-            end: this.playback.bm + bmnr_bm(bmnr)}
+            end: this.playback.bm + duration
+          
+          }
           voice.instrument_id = this.instrument
           .attack(nr, this.schedule_next_time)
-          this.instrument.release(voice.instrument_id, this.schedule_next_time + bmnr_bm(bmnr) * this.playback.quanti_duration / 1000)
+          this.instrument.release(voice.instrument_id, 
+                                  this.schedule_next_time + 
+                                    duration * this.playback.quanti_duration / 1000)
         }
       }
     }
@@ -431,12 +453,19 @@ export class PlayWithKeyboard extends IPlay {
   }
 
   get time_signature(): TimeSignature {
-    return this.data as TimeSignature
+    return this.divido.time_signature
+  }
+
+  get divido(): BeatDivido {
+    return (this.data as DividoAndTies).divido
+  }
+
+  get ties(): Ties {
+    return (this.data as DividoAndTies).ties
   }
 
 
   voices!: Array<Voice>
-  divido!: BeatDivido
   instrument!: PlayerController
 
   playback!: Playback
@@ -446,10 +475,6 @@ export class PlayWithKeyboard extends IPlay {
     this.instrument = new PlayerController()
 
     this.voices = []
-
-    this.divido = new BeatDivido(this.time_signature)
-    this.divido.add_measure()
-    this.divido.add_measure()
 
     this.playback = new Playback(this.ctx)._set_data(this.time_signature).init()
   }
@@ -463,6 +488,7 @@ export class PlayWithKeyboard extends IPlay {
     if (this.playback.on_reset) {
       // TODO leak
       if (this.playback.repeat) {
+        this.ties.ties = []
         this.divido.rest_interval(...this.playback.repeat)
       }
       this.voices.forEach(_ => _.instrument_id && this.instrument.release(_.instrument_id, this.schedule_next_time))
@@ -528,18 +554,10 @@ export class NoteSelection extends IPlay {
   get divido(): BeatDivido { return (this.data as DividoAndTies).divido }
   get ties(): Ties { return (this.data as DividoAndTies).ties }
 
-  get bm(): BeatMeasureNote {
-    return this.divido.bmnr_at_index(this.current_index)
-  }
-
-  get bm_next(): BeatMeasureNote | undefined {
-    return this.divido.next_bmnr_with_same_pitch(this.current_index)
-  }
-
   current_index!: number
 
   _init() {
-    this.current_index = 0
+    this.current_index = -1
   }
 
 
@@ -553,17 +571,17 @@ export class NoteSelection extends IPlay {
     }
 
     if (this.input.btnpp(btn_tie)) {
-      let { bm, bm_next } = this
-      if (bm_next) {
-        this.ties.add_tie(bm, bm_next)
+      let next = this.divido.next_bmnr_index_with_same_pitch(this.current_index)
+
+      if (next) {
+        this.ties.add_tie(this.current_index, next)
       }
     }
 
   }
 }
 
-type BeatMeasureNote = BeatMeasureNoteRest
-type NotesTie = [BeatMeasureNote, BeatMeasureNote]
+type NotesTie = [number, number]
 
 export class Ties extends IPlay {
 
@@ -573,8 +591,8 @@ export class Ties extends IPlay {
     this.ties = []
   }
 
-  add_tie(n1: BeatMeasureNote, n2: BeatMeasureNote) { this.ties.push([n1, n2]) }
-  remove_tie(bm: BeatMeasureNote) { }
+  add_tie(n1: number, n2: number) { this.ties.push([n1, n2]) }
+  remove_tie(n1: number) { }
 
   _update(dt: number, dt0: number) {
   }
@@ -780,11 +798,8 @@ export default class Ctrl extends IPlay {
 
   current_drag_repeat?: number
 
+  divido!: BeatDivido
   ties!: Ties
-
-  get divido(): BeatDivido {
-    return this.control.divido
-  }
 
   get playback(): Playback {
     return this.control.playback
@@ -897,11 +912,11 @@ export default class Ctrl extends IPlay {
   }
 
   _init() {
+
     let time = make_time_signature(4, 4)
-    this.play_with_keyboard = new PlayWithKeyboard(this.ctx)._set_data(time).init()
-    this.play_with_divido = new PlayWithDivido(this.ctx)._set_data(this.play_with_keyboard.divido).init()
-    
-    this.control = this.play_with_keyboard
+    this.divido = new BeatDivido(time)
+    this.divido.add_measure()
+    this.divido.add_measure()
 
     this.ties = new Ties(this.ctx).init()
     let { divido, ties } = this
@@ -911,16 +926,29 @@ export default class Ctrl extends IPlay {
       ties
     }
 
+    this.play_with_keyboard = new PlayWithKeyboard(this.ctx)._set_data(dandt).init()
+    this.play_with_divido = new PlayWithDivido(this.ctx)._set_data(dandt).init()
+    
+    this.control = this.play_with_keyboard
+
     this.note_selection = new NoteSelection(this.ctx)._set_data(dandt).init()
   }
 
 
   save() {
-    return JSON.stringify(this.divido.bmnrs)
+    let { bmnrs } = this.divido
+    let { ties } = this.ties
+
+    return JSON.stringify({bmnrs, ties })
   }
 
   restore(data: any) {
-    this.divido.bmnrs = JSON.parse(data)
+    let { bmnrs, ties } = JSON.parse(data)
+
+    if (bmnrs) {
+      this.divido.bmnrs = bmnrs
+      this.ties.ties = ties
+    }
   }
 
   _update(dt: number, dt0: number) {
