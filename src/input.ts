@@ -1,7 +1,7 @@
 import { ticks } from './shared'
 
 let RE = /^[A-Za-z0-9\+\-;'\\]$/
-let RE2 = /^(\s|Left|Right|Backspace|Enter|Tab|\*)$/
+let RE2 = /^(\s|ArrowLeft|ArrowRight|Backspace|Enter|Tab|\*)$/
 function capture_key(key: string) {
   return key.match(RE) || key.match(RE2)
 }
@@ -36,6 +36,9 @@ export default class Input {
 
 
   _btn = new Map<string, ButtonState>()
+
+  _last_released?: string
+  _btnpp?: string
 
   private press = (key: string, ctrl: boolean) => {
     if (!this._btn.has(key)) {
@@ -72,7 +75,14 @@ export default class Input {
     return this.btn(key) > 0 && this.btn0(key) === 0
   }
 
+  btnpp = (key: string) => {
+    return this._btnpp === key
+  }
+
   update = (dt: number, dt0: number) => {
+
+    this._btnpp = undefined
+
     for (let [key, s] of this._btn) {
       if (s.t === 0) {
         s.t0 = s.t
@@ -87,6 +97,13 @@ export default class Input {
         s.t0 = s.t
         s.t = 0
         s.just_released = false
+
+        if (this._last_released && this._last_released === key) {
+          this._btnpp = key
+          this._last_released = undefined
+        } else {
+          this._last_released = key
+        }
       }
     }
   }

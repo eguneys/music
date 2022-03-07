@@ -1,12 +1,14 @@
 import { h, VNode } from 'snabbdom'
-import Ctrl, { Playback } from './ctrl'
+import Ctrl, { Playback, Ties } from './ctrl'
 import g from './glyphs'
 import { Voice } from './ctrl'
 
 import { Tempo, Pitch, Octave } from './music'
 import { FreeOnStaff } from './types'
 
-import { BeatMeasure, bm_measure, bm_beat } from './music'
+import { BeatMeasure, bm_measure, bm_beat, bm_quanti, bm_beats } from './music'
+import { bmnr_nr, bmnr_bm } from './music'
+import { note_pitch, note_octave } from './music'
 
 export default function view(ctrl: Ctrl) {
   return h('div.m-wrap', {
@@ -35,45 +37,72 @@ export default function view(ctrl: Ctrl) {
         free_on_staff(_),
         ...stem(_),
       ]),
-      ...ties(),
+      ...ties(ctrl, ctrl.ties),
       ...barlines(ctrl.playback.beats_per_measure),
     ])
   ])
 }
 
-function ties() {
+function ties(ctrl: Ctrl, ties: Ties) {
+
+
+  /*
   return [
-    tie(1, 5, 0, 1),
-    tie(1, 5, 1, 3),
-    tie(1, 5, 3, 6),
-    tie(1, 5, 6, 10),
-    tie(1, 5, 10, 15),
-    tie(1, 5, 15, 21),
-    tie(1, 5, 21, 28),
+    tie(3, 4, 24, 32),
+    tie(2, 5, 0, 4)
   ]
+ */
+
+  /*
+  let x = 4
+  return [
+    tie(1, 5, x+0, x+1),
+    tie(1, 4, x+0, x+2),
+    tie(1, 5, x+0, x+3),
+    tie(3, 4, x+0, x+4),
+    tie(3, 5, x+0, x+5),
+  ]
+ */
+
+  return ties.ties.map(_tie => {
+    let [bmnr1, bmnr2] = _tie
+
+    let nr = bmnr_nr(bmnr1)
+    let pitch = note_pitch(nr),
+      octave = note_octave(nr)
+
+    let bm1 = bmnr_bm(bmnr1),
+      bm2 = bmnr_bm(bmnr2)
+
+    let quantis1 = bm_beats(bm1, ctrl.playback.beats_per_measure) * 8 + bm_quanti(bm1),
+      quantis2 = bm_beats(bm2, ctrl.playback.beats_per_measure) * 8 + bm_quanti(bm2)
+
+    //console.log(pitch, octave, quantis1, quantis2)
+    return tie(pitch, octave, quantis1, quantis2)
+  })
 }
 
 function tie(pitch: Pitch, octave: Octave, x1: number, x2: number) {
 
+
+  let make_mask_id = 'mask_' + [pitch, octave, x1, x2].join('_')
+
   let y1 = pitch_y(pitch, octave) 
 
-  x1 += 2
-  x2 += 2
-
-  let w = x2 - x1,
+  let w = (x2 - x1) *0.4,
     hw = w/ 2
 
   let scale_y = w > 3 ? 14/w * 0.2 : 1
 
   return h('svg.tie', { 
     style: {
-      transform: `translate(calc(${x1 - w*0.1}em), calc(${y1+0.25-w*0.12-(scale_y*3-2)*0.15}em)) scaleY(${scale_y})`
+      transform: `translate(calc(${2+0.05 +x1*0.25 - w*0.16}em), calc(${y1-w*0.12-(scale_y*3-2)*0.15}em)) scaleY(${scale_y})`
     },
     attrs: { width: `${w}em`, height: `${w}em`, viewBox: '0 0 100 100' } 
   }, [
     h('defs', [
       h('mask', { attrs: {
-        id: 'm1'
+        id: make_mask_id
       }}, [h('circle', {
         attrs: { cx: `${50}`, cy: `${50}`, r: `${200}`, fill: 'white' }
       }),/*
@@ -82,7 +111,7 @@ function tie(pitch: Pitch, octave: Octave, x1: number, x2: number) {
       }),
      */
       h('circle', {
-        attrs: { cx: `50`, cy: `${66-2*w}`, r: `${60+1*w}`, fill: 'black' }
+        attrs: { cx: `50`, cy: `${66-0.1*Math.sqrt(2*w)}`, r: `${60+0.4*Math.sqrt(10*w)}`, fill: 'black' }
       }), 
       h('circle', {
         attrs: { cx: `10`, cy: `50`, r: `40`, fill: 'black' }
@@ -93,7 +122,7 @@ function tie(pitch: Pitch, octave: Octave, x1: number, x2: number) {
       ])
     ]),
     h('circle', {
-      attrs: { cx: `50`, cy: `50`, r: `50`, fill: 'black', mask:"url(#m1)" }
+      attrs: { cx: `50`, cy: `50`, r: `50`, fill: 'black', mask:`url(#${make_mask_id})` }
     })
   ] )
 }
@@ -249,7 +278,7 @@ export function free_on_staff(on_staff: FreeOnStaff) {
   let y = pitch_y(pitch, octave),
     x = ox
 
-  return h('span.' + code + '.' + klass, {
+  return h('span.note_head.' + code + '.' + klass, {
     style: {
       transform: `translate(calc(${x}em), calc(${y}em + ${oy}em))`
     }

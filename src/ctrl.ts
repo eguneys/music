@@ -86,6 +86,8 @@ let btn_pitches_all = [...btn_pitches, ...btn_pitches_octave_up, btn_rest]
 let btn_reset = 'Enter'
 let btn_play = '*'
 
+let btn_tie = 't'
+
 
 // TODO GC
 function voice_pitch_octave(voice: Voice): [Pitch, Octave] | undefined {
@@ -176,6 +178,42 @@ export class BeatDivido {
   }
 
   constructor(readonly time_signature: TimeSignature) {}
+
+  next_bmnr_with_same_pitch(index: number) {
+    let bmnr = this.bmnrs[index]
+    let nr = bmnr_nr(bmnr)
+    if (is_note(nr)) {
+
+      let pitch = note_pitch(nr),
+        octave = note_octave(nr)
+
+
+      for (let i = index + 1; i < this.bmnrs.length; i++) {
+
+        let _bmnr = this.bmnrs[i]
+        let _nr = bmnr_nr(_bmnr)
+
+        if (is_note(_nr)) {
+
+          if (pitch === note_pitch(_nr) && octave === note_octave(_nr)) {
+            return this.bmnr_at_index(i)
+          }
+        }
+
+
+      }
+    }
+  }
+
+  bmnr_at_index(index: number) {
+    let _bm = 0
+    for (let i = 0; i < index; i++) {
+      let bmnr = this.bmnrs[i]
+
+      _bm += bmnr_bm(bmnr)
+    }
+    return make_bmnr(_bm, bmnr_nr(this.bmnrs[index]))
+  }
 
 
   /* https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/log */
@@ -420,7 +458,6 @@ export class PlayWithKeyboard extends IPlay {
 
   _update(dt: number, dt0: number) {
 
-
     this.playback.update(dt, dt0)
 
     if (this.playback.on_reset) {
@@ -479,6 +516,70 @@ export class PlayWithKeyboard extends IPlay {
 
     this._schedule_redraw ||= this.playback._schedule_redraw
   }
+}
+
+type DividoAndTies = {
+  divido: BeatDivido,
+  ties: Ties
+}
+
+export class NoteSelection extends IPlay {
+
+  get divido(): BeatDivido { return (this.data as DividoAndTies).divido }
+  get ties(): Ties { return (this.data as DividoAndTies).ties }
+
+  get bm(): BeatMeasureNote {
+    return this.divido.bmnr_at_index(this.current_index)
+  }
+
+  get bm_next(): BeatMeasureNote | undefined {
+    return this.divido.next_bmnr_with_same_pitch(this.current_index)
+  }
+
+  current_index!: number
+
+  _init() {
+    this.current_index = 0
+  }
+
+
+  _update(dt: number, dt0: number) {
+
+
+    if (this.input.btnp('left')) {
+      this.current_index--;
+    } else if (this.input.btnp('right')) {
+      this.current_index++;
+    }
+
+    if (this.input.btnpp(btn_tie)) {
+      let { bm, bm_next } = this
+      if (bm_next) {
+        this.ties.add_tie(bm, bm_next)
+      }
+    }
+
+  }
+}
+
+type BeatMeasureNote = BeatMeasureNoteRest
+type NotesTie = [BeatMeasureNote, BeatMeasureNote]
+
+export class Ties extends IPlay {
+
+  ties!: Array<NotesTie>
+
+  _init() {
+    this.ties = []
+  }
+
+  add_tie(n1: BeatMeasureNote, n2: BeatMeasureNote) { this.ties.push([n1, n2]) }
+  remove_tie(bm: BeatMeasureNote) { }
+
+  _update(dt: number, dt0: number) {
+  }
+
+
 }
 
 export class Playback extends IPlay {
@@ -672,10 +773,14 @@ export default class Ctrl extends IPlay {
   play_with_keyboard!: PlayWithKeyboard
   play_with_divido!: PlayWithDivido
 
+  note_selection!: NoteSelection
+
   control!: any
 
 
   current_drag_repeat?: number
+
+  ties!: Ties
 
   get divido(): BeatDivido {
     return this.control.divido
@@ -703,18 +808,22 @@ export default class Ctrl extends IPlay {
 
     let ox = 2
 
-    this.divido.bmnrs.forEach(bmnr => {
-
+    this.divido.bmnrs.forEach((bmnr, i) => {
       let bm = bmnr_bm(bmnr),
         nr = bmnr_nr(bmnr)
 
       let beat = bm_beat(bm, this.playback.beats_per_measure),
         quanti = bm_quanti(bm)
 
+      let selected = this.note_selection.current_index === i
+
+
+      let klass = selected ? 'selected':''
+
       if (is_note(nr)) {
-        res.push(...free_note_parts(nr, ox))
+        res.push(...free_note_parts(nr, ox,klass))
       } else {
-        res.push({ code: rest_duration_code(nr), klass: '', pitch: 7 as Pitch, octave: 4 as Octave, ox, oy: 0 })
+        res.push({ code: rest_duration_code(nr), klass, pitch: 7 as Pitch, octave: 4 as Octave, ox, oy: 0 })
       }
 
       ox += (beat + quanti / 8) * 2
@@ -762,7 +871,6 @@ export default class Ctrl extends IPlay {
           let x1 = this.em * (bm1 * 2 + 2),
             x2 = this.em * (bm2 * 2 + 2),
             lee = this.em * 0.2
-          console.log(x, x2)
 
           if (x1 - lee < x && x < x1 + lee) {
             this.current_drag_repeat = 0
@@ -794,6 +902,16 @@ export default class Ctrl extends IPlay {
     this.play_with_divido = new PlayWithDivido(this.ctx)._set_data(this.play_with_keyboard.divido).init()
     
     this.control = this.play_with_keyboard
+
+    this.ties = new Ties(this.ctx).init()
+    let { divido, ties } = this
+
+    let dandt = {
+      divido,
+      ties
+    }
+
+    this.note_selection = new NoteSelection(this.ctx)._set_data(dandt).init()
   }
 
 
@@ -848,6 +966,7 @@ export default class Ctrl extends IPlay {
 
     }
 
+    this.note_selection.update(dt, dt0)
     this.control.update(dt, dt0)
 
     this._schedule_redraw = this.control._schedule_redraw

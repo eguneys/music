@@ -1,0 +1,1 @@
+- [ ] Stop instrument out of focus
