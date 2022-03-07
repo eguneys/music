@@ -571,10 +571,14 @@ export class NoteSelection extends IPlay {
     }
 
     if (this.input.btnpp(btn_tie)) {
-      let next = this.divido.next_bmnr_index_with_same_pitch(this.current_index)
+      if (this.ties.ties.find(_ => _[0] === this.current_index)) {
+        this.ties.ties = this.ties.ties.filter(_ => _[0] !== this.current_index)
+      } else {
+        let next = this.divido.next_bmnr_index_with_same_pitch(this.current_index)
 
-      if (next) {
-        this.ties.add_tie(this.current_index, next)
+        if (next) {
+          this.ties.add_tie(this.current_index, next)
+        }
       }
     }
 
