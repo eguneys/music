@@ -2,9 +2,10 @@ import { ticks } from './shared'
 import { memo, Memo } from './util'
 import { Clef, Pitch, Octave, Duration, Tempo, TimeSignature } from './music'
 import { make_note, make_time_signature, is_tempo, is_note, is_rest } from './music'
-import { Note, note_pitch, note_octave, note_duration } from './music'
+import { Note, note_accidental, note_pitch, note_octave, note_duration } from './music'
 import { NoteValue, NbNoteValuePerMeasure, time_nb_note_value, time_note_value } from './music'
 
+import { Accidental } from './music'
 import { Beat, Measure, BeatQuanti, BeatMeasure } from './music'
 import { bm_beats, bm_beat, bm_quanti, bm_measure, make_bm } from './music'
 import { BeatMeasureNoteRest, make_bmnr, bmnr_bm, bmnr_nr } from './music'
@@ -61,7 +62,8 @@ abstract class IPlay {
 function free_note_parts(nr: Note, ox: number, klass: string = '') {
   let pitch = note_pitch(nr),
     octave = note_octave(nr),
-    duration = note_duration(nr)
+    duration = note_duration(nr),
+    accidental = note_accidental(nr)
 
 
   let flag = note_duration_flag(duration)
@@ -71,17 +73,19 @@ function free_note_parts(nr: Note, ox: number, klass: string = '') {
     flag
   } : undefined
 
-  return [{ stem, code: note_duration_code(duration), klass, pitch, octave, ox, oy: 0 }]
+  return [{ stem, code: note_duration_code(duration), klass, pitch, octave, accidental, ox, oy: 0 }]
 }
 
 
 
 
+let btn_accidentals = ['i', 'o', 'p','[',']']
+let btn_accidentals_octave_up = ['w', 'e', 'r','t','y']
 let btn_pitches = [' ', 'j', 'k', 'l', ';', '\'', '\\']
 let btn_pitches_octave_up = ['a', 's', 'd', 'f', 'g', 'h']
 let btn_rest = 'Backspace'
 
-let btn_pitches_all = [...btn_pitches, ...btn_pitches_octave_up, btn_rest]
+let btn_pitches_all = [...btn_accidentals, ...btn_accidentals_octave_up, ...btn_pitches, ...btn_pitches_octave_up, btn_rest]
 
 let btn_reset = 'Enter'
 let btn_play = '*'
@@ -89,19 +93,36 @@ let btn_play = '*'
 let btn_tie = 't'
 
 
+type PitchOctaveAccidental = [Pitch, Octave, Accidental | undefined]
 // TODO GC
-function voice_pitch_octave(voice: Voice): [Pitch, Octave] | undefined {
+function voice_pitch_octave_accidental(voice: Voice): PitchOctaveAccidental | undefined {
   let { key } = voice
   let pitch = btn_pitches.indexOf(key) + 1
   if (pitch > 0) {
-    return [pitch, 4] as [Pitch, Octave]
+    return [pitch, 4, undefined] as PitchOctaveAccidental
   }
   pitch = btn_pitches_octave_up.indexOf(key) + 1
   if (pitch > 0) {
-    return [pitch, 5] as [Pitch, Octave]
+    return [pitch, 5, undefined] as PitchOctaveAccidental
+  }
+
+  pitch = btn_accidentals.indexOf(key) + 1
+  if (pitch > 0) {
+    if (pitch <= 2) {
+      return [pitch, 4, 1] as PitchOctaveAccidental
+    } else {
+      return [pitch + 1, 4, 1] as PitchOctaveAccidental
+    }
+  }
+  pitch = btn_accidentals_octave_up.indexOf(key) + 1
+  if (pitch > 0) {
+    if (pitch <= 2) {
+      return [pitch, 5, 1] as PitchOctaveAccidental
+    } else {
+      return [pitch + 1, 5, 1] as PitchOctaveAccidental
+    }
   }
 }
-
 
 const tempos = [10, 60, 80, 90, 120, 168, 200, 400]
 
@@ -282,7 +303,7 @@ export class BeatDivido {
   }
 
 
-  add_note(bm: BeatMeasure, nb_quanti: BeatQuanti, po?: [Pitch, Octave]) {
+  add_note(bm: BeatMeasure, nb_quanti: BeatQuanti, po?: [Pitch, Octave, Accidental|undefined]) {
     let measure = bm_measure(bm, this.nb_beats),
       beat = bm_beat(bm, this.nb_beats),
       quanti = bm_quanti(bm)
@@ -327,12 +348,11 @@ export class BeatDivido {
                     make_bmnr(
                       this.sub_quanties_for_note_values[i],
                       po?make_note(po[0], po[1], 
-                                   this.quanti_note_value(this.sub_quanties_for_note_values[i])):
+                                   this.quanti_note_value(this.sub_quanties_for_note_values[i]), po[2]):
                                    this.quanti_note_value(this.sub_quanties_for_note_values[i])
                                   )))
 
       let removed = this.bmnrs.splice(start_i, end_i - start_i + 1, ...b_notes, ...i_notes, ...e_notes)
-      
       return true
     }
 
@@ -412,7 +432,7 @@ export class PlayWithDivido extends IPlay {
         /* TODO superflous track begin check */
         (this.playback.countdown_bm === undefined && this.playback.bm === 0 && this.playback.bm0 === 0 && this.playback.t_quanti === 0)) {
       let bmnr_i = this.divido.bmnri_at_bm(this.playback.bm)
-      if (bmnr_i) {
+      if (bmnr_i !== undefined) {
         let bmnr = this.divido.bmnrs[bmnr_i]
         let nr = bmnr_nr(bmnr)
         let tie_end = this.ties.ties.find(_ => _[1] === bmnr_i)
@@ -509,9 +529,9 @@ export class PlayWithKeyboard extends IPlay {
       if (x > 0) {
         if (x0 === 0) {
           let voice: Voice = { key, start: this.playback.bm }
-          let po = voice_pitch_octave(voice)
+          let po = voice_pitch_octave_accidental(voice)
           if (po) {
-            voice.instrument_id = this.instrument.attack(make_note(po[0], po[1], 1), this.schedule_next_time)
+            voice.instrument_id = this.instrument.attack(make_note(po[0], po[1], 1, po[2]), this.schedule_next_time)
           }
           this.voices.push(voice)
         }
@@ -533,7 +553,7 @@ export class PlayWithKeyboard extends IPlay {
         if (_.instrument_id) {
           this.instrument.release(_.instrument_id, this.schedule_next_time)
         }
-        this.divido.add_note(_.start, _.end - _.start as BeatQuanti, voice_pitch_octave(_))
+        this.divido.add_note(_.start, _.end - _.start as BeatQuanti, voice_pitch_octave_accidental(_))
         this.redraw()
         return false
       }
@@ -852,7 +872,7 @@ export default class Ctrl extends IPlay {
     let voice = this.voices[0]
 
     if (voice) {
-      let po = voice_pitch_octave(voice)
+      let po = voice_pitch_octave_accidental(voice)
       if (po) {
         // TODO make abstraction
         let nb_quanti = this.playback.bm - voice.start as BeatQuanti
@@ -866,7 +886,7 @@ export default class Ctrl extends IPlay {
         nb_quanti = nb_quanti - quantized_left as BeatQuanti
         let note_duration = this.divido.quanti_note_value(nb_quanti)
 
-        let nr = make_note(po[0], po[1], note_duration)
+        let nr = make_note(po[0], po[1], note_duration, po[2])
         res.push(...free_note_parts(nr, 2 + (voice.start / 8) * 2, 'voice'))
       }
     }
@@ -932,6 +952,7 @@ export default class Ctrl extends IPlay {
 
     this.play_with_keyboard = new PlayWithKeyboard(this.ctx)._set_data(dandt).init()
     this.play_with_divido = new PlayWithDivido(this.ctx)._set_data(dandt).init()
+    this.play_with_divido.playback = this.play_with_keyboard.playback
     
     this.control = this.play_with_keyboard
 

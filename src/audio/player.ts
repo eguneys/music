@@ -1,4 +1,4 @@
-import { Note, note_pitch, note_octave } from '../music/types'
+import { Note, note_pitch, note_octave, note_accidental } from '../music/types'
 
 type MidiNote = {
   freq: number
@@ -11,13 +11,25 @@ type Adsr = {
   r?: number
 }
 
+/* C C# D D# E F F# G G# A A# B */
+const pitch_to_freq_index = [1, 1.5, 2, 2.5, 3, 4, 4.5, 5, 5.5, 6, 6.5, 7]
 /* https://github.com/jergason/notes-to-frequencies/blob/master/index.js */
+/* http://techlib.com/reference/musical_note_frequencies.htm#:~:text=Starting%20at%20any%20note%20the,be%20positive%2C%20negative%20or%20zero. */
+/* https://newt.phys.unsw.edu.au/jw/notes.html */
 function note_freq(note: Note) {
 
   let octave = note_octave(note)
   let pitch = note_pitch(note)
+  let accidental = note_accidental(note)
 
-  let n = pitch + octave * 12
+  if (accidental === 1) {
+    pitch += 0.5
+  }
+  let n = pitch_to_freq_index.indexOf(pitch)
+
+  n += octave * 12
+
+  console.log(pitch, octave, n, 440 * Math.pow(2, (n - 57) / 12))
 
   return 440 * Math.pow(2, (n - 57) / 12)
 }
@@ -120,7 +132,7 @@ export class MidiPlayer extends HasAudioAnalyser {
   envelope!: GainNode
 
   get envelope_adsr() {
-    return { a: 0.02, d: 0.1, s: 0.48,  r: 0.1 }
+    return { a: 0.02, d: 0.1, s: 0.48,  r: 0.3 }
   }
 
   _set_data(data: MidiNote) {
@@ -147,10 +159,10 @@ export class MidiPlayer extends HasAudioAnalyser {
     let osc2_mix = new GainNode(context)
     osc2.connect(osc2_mix)
 
-    osc1_mix.gain.setValueAtTime(0.7, now)
-    osc2_mix.gain.setValueAtTime(0.3, now)
+    osc1_mix.gain.setValueAtTime(0.5, now)
+    osc2_mix.gain.setValueAtTime(0.5, now)
 
-    osc2.detune.setValueAtTime(1200 + 700, now)
+    osc2.detune.setValueAtTime(700, now)
 
     let filter = new BiquadFilterNode(context, { type: 'lowpass' })
     osc1_mix.connect(filter)
@@ -164,14 +176,14 @@ export class MidiPlayer extends HasAudioAnalyser {
 
 
 
-    let cutoff = 4500
+    let cutoff = 3500
     osc1.frequency.setValueAtTime(freq, now)
 
     osc2.frequency.setValueAtTime(freq, now)
 
     ads(filter.frequency,
          now,
-         { a: 0.02, d: 0.2, s: 0 },
+         { a: 0, d: 0.2, s: 0 },
          cutoff,
          cutoff * 3,
          cutoff)

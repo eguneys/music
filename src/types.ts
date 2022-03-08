@@ -1,4 +1,4 @@
-import { Pitch, Octave } from './music'
+import { Pitch, Octave, Accidental } from './music'
 
 export type Code = string
 export type Direction = 1 | -1
@@ -30,6 +30,7 @@ export type FreeOnStaff = {
   klass: string,
   pitch: Pitch,
   octave: Octave,
+  accidental?: Accidental,
   ox: number,
   oy: number,
   stem?: Stem,

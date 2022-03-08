@@ -1,1 +1,2 @@
 - [ ] Stop instrument out of focus
+- https://lilypond.org/doc/v2.22/Documentation/learning/ties-and-slurs

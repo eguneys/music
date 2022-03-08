@@ -24,6 +24,7 @@ staff .repeat::before {
   height: 100%;
   cursor: w-resize;
   transform: translate(-50%, 0);
+  z-index: 1;
 }
 
 staff .repeat-fill {

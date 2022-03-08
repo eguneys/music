@@ -75,11 +75,15 @@ body {
 
 
       const store = make_storage('staff')
+      const store2 = make_storage('staff2')
 
 
 
       document.addEventListener('DOMContentLoaded', () => {
-              let api = Space({ capture: true}, document.getElementById('app1'))
+
+              let api = Space({}, document.getElementById('app2'))
+
+              let api2 = Space({ capture: true}, document.getElementById('app1'))
 
 
               let res = store.get()
@@ -87,10 +91,24 @@ body {
                       api.restore(res)
                     }
 
+
+              let res2 = store2.get()
+              if (res2) {
+                      api2.restore(res2)
+                    }
+
+
+
+
               window.addEventListener('beforeunload', function() {
                       let res = api.save()
                       if (res) {
                               store.set(res)
+                            }
+
+                      let res2 = api2.save()
+                      if (res2) {
+                              store2.set(res2)
                             }
                     })
 

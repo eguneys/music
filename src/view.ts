@@ -3,7 +3,7 @@ import Ctrl, { Playback, Ties } from './ctrl'
 import g from './glyphs'
 import { Voice } from './ctrl'
 
-import { Tempo, Pitch, Octave } from './music'
+import { Tempo, Pitch, Octave, Accidental } from './music'
 import { FreeOnStaff } from './types'
 
 import { BeatMeasure, bm_measure, bm_beat, bm_quanti, bm_beats } from './music'
@@ -35,6 +35,7 @@ export default function view(ctrl: Ctrl) {
       tempo(ctrl, ctrl.playback.bpm),
       ...ctrl.frees.flatMap(_ => [
         free_on_staff(_),
+        ...accidental(_),
         ...stem(_),
       ]),
       ...ties(ctrl, ctrl.ties),
@@ -158,6 +159,31 @@ export function stem(free: FreeOnStaff) {
       transform: `translate(${ox}em, ${oy}em)`
     }
   }, g[flag_code[stem.flag - 1] + '_' + direction]) : null]
+}
+
+let accidental_codes = ['sharp_accidental', 'flat_accidental', 'natural_accidental']
+export function accidental(free: FreeOnStaff) {
+  if (!free.accidental) {
+    return []
+  }
+
+  let { accidental } = free
+
+  let klass = free.klass
+
+  let code = accidental_codes[accidental - 1]
+
+  let x = 0
+  let y = pitch_y(free.pitch, free.octave)
+  let ox = free.ox,
+    oy = free.oy + y
+
+  return [h('span.accidental', {
+    style: {
+      transform: `translate(${ox-0.25}em, ${oy}em)`
+    }
+  }, g[code])]
+
 }
 
 export function playback(ctrl: Ctrl, playback: Playback) {

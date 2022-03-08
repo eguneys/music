@@ -1,6 +1,6 @@
 import { ticks } from './shared'
 
-let RE = /^[A-Za-z0-9\+\-;'\\]$/
+let RE = /^[A-Za-z0-9\+\-;'\\\[\]]$/
 let RE2 = /^(\s|ArrowLeft|ArrowRight|Backspace|Enter|Tab|\*)$/
 function capture_key(key: string) {
   return key.match(RE) || key.match(RE2)

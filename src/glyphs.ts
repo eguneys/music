@@ -7,6 +7,10 @@ const half_note = ''
 const quarter_note = ''
 const brace = ''
 
+const flat_accidental = ''
+const natural_accidental = ''
+const sharp_accidental = ''
+
 const eighth_flag_up = ''
 const sixteenth_flag_up = ''
 const thirtysecond_flag_up = ''
@@ -54,6 +58,9 @@ export default {
   whole_note,
   half_note,
   quarter_note,
+  flat_accidental,
+  natural_accidental,
+  sharp_accidental,
   eighth_flag_down,
   sixteenth_flag_down,
   thirtysecond_flag_down,
